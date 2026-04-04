@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBITAL COMMAND // ARTEMIS + ISS + LUNAR</title>
+    <title>ORBITAL COMMAND // ARTEMIS MISSION CONTROL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="importmap">
         {
@@ -58,7 +58,7 @@
         }
         .metric-value { 
             color: #fff; 
-            font-size: 18px; 
+            font-size: 20px; 
             font-weight: 600;
             font-family: 'Share Tech Mono', monospace;
             text-shadow: 0 0 15px rgba(100, 180, 255, 0.4);
@@ -76,7 +76,7 @@
         .ui-layer > * { pointer-events: auto; }
         
         #log { 
-            height: 150px; overflow-y: auto; 
+            height: 120px; overflow-y: auto; 
             font-family: 'Share Tech Mono', monospace;
             font-size: 10px; padding: 10px;
         }
@@ -102,13 +102,77 @@
             border-color: #409cff; color: #fff;
             box-shadow: 0 0 20px rgba(64, 156, 255, 0.3);
         }
-        .status-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            display: inline-block; margin-right: 6px;
+        
+        /* Timeline styles */
+        .timeline-container {
+            padding: 12px;
         }
-        .online { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
-        .offline { background: #ef4444; }
-        .standby { background: #fbbf24; }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-left: 2px solid rgba(64, 156, 255, 0.3);
+            padding-left: 12px;
+            margin-left: 8px;
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(64, 156, 255, 0.3);
+            border: 2px solid rgba(64, 156, 255, 0.5);
+        }
+        .timeline-item.active::before {
+            background: #4ade80;
+            border-color: #4ade80;
+            box-shadow: 0 0 10px #4ade80;
+        }
+        .timeline-item.completed::before {
+            background: #409cff;
+            border-color: #409cff;
+        }
+        .timeline-time {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: rgba(160, 190, 220, 0.6);
+            width: 70px;
+        }
+        .timeline-title {
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .timeline-desc {
+            font-size: 10px;
+            color: rgba(160, 190, 220, 0.7);
+        }
+        
+        .moon-prediction {
+            padding: 10px;
+            font-size: 11px;
+        }
+        .moon-prediction-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(64, 156, 255, 0.1);
+        }
+        
+        .camera-hint {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: rgba(160, 190, 220, 0.8);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -116,41 +180,98 @@
     <div id="canvas-container"></div>
     
     <div class="ui-layer flex h-screen">
-        <!-- Left Panel - Artemis II -->
-        <div class="w-80 hud-panel flex flex-col m-3 mt-16">
-            <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(244,114,182,0.3), rgba(244,114,182,0.1)); border-color: rgba(244,114,182,0.4);">
-                <span class="artemis">ARTEMIS II // ORION</span>
-                <span class="live text-xs px-2 py-1 rounded" style="background: rgba(244,114,182,0.2)">● LIVE</span>
+        <!-- Left Panel - Mission Timeline & Artemis -->
+        <div class="w-96 flex flex-col m-3 mt-16 gap-3">
+            <!-- Artemis Telemetry -->
+            <div class="hud-panel flex flex-col" style="flex: 1.2;">
+                <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(244,114,182,0.3), rgba(244,114,182,0.1)); border-color: rgba(244,114,182,0.4);">
+                    <span class="artemis">ARTEMIS II // ORION</span>
+                    <span class="live text-xs px-2 py-1 rounded" style="background: rgba(244,114,182,0.2)">● LIVE</span>
+                </div>
+                <div class="p-3">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">EARTH DIST</span>
+                        <span class="artemis font-mono" id="artemis-dist">--- km</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">MOON DIST</span>
+                        <span class="lunar font-mono" id="artemis-moon-dist">--- km</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">VELOCITY</span>
+                        <span class="font-mono" id="artemis-vel">--- m/s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-400">PHASE</span>
+                        <span class="artemis font-bold" id="artemis-phase">ACQUIRING...</span>
+                    </div>
+                </div>
             </div>
-            <div class="flex-1 overflow-auto">
-                <div class="metric">
-                    <div class="metric-label">Distance from Earth</div>
-                    <div class="metric-value artemis">
-                        <span id="artemis-dist">---</span>
-                        <span class="metric-unit">km</span>
+            
+            <!-- Mission Timeline -->
+            <div class="hud-panel flex flex-col" style="flex: 1.5;">
+                <div class="hud-header">MISSION TIMELINE</div>
+                <div class="timeline-container overflow-auto">
+                    <div class="timeline-item completed">
+                        <span class="timeline-time">T+ 00:00</span>
+                        <div>
+                            <div class="timeline-title">LAUNCH</div>
+                            <div class="timeline-desc">SLS liftoff from KSC</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item completed">
+                        <span class="timeline-time">T+ 00:08</span>
+                        <div>
+                            <div class="timeline-title">CORE STAGE SEP</div>
+                            <div class="timeline-desc">Main engine cutoff</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item active" id="timeline-current">
+                        <span class="timeline-time">CURRENT</span>
+                        <div>
+                            <div class="timeline-title artemis">OUTBOUND COAST</div>
+                            <div class="timeline-desc">Trans-lunar injection</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">T+ 3-4 DAYS</span>
+                        <div>
+                            <div class="timeline-title">LUNAR FLYBY</div>
+                            <div class="timeline-desc">Closest approach to Moon</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">T+ ~10 DAYS</span>
+                        <div>
+                            <div class="timeline-title">SPLASHDOWN</div>
+                            <div class="timeline-desc">Pacific Ocean recovery</div>
+                        </div>
                     </div>
                 </div>
-                <div class="metric">
-                    <div class="metric-label">Distance to Moon</div>
-                    <div class="metric-value">
-                        <span id="artemis-moon-dist">---</span>
-                        <span class="metric-unit">km</span>
+            </div>
+            
+            <!-- Moon Prediction -->
+            <div class="hud-panel flex flex-col" style="flex: 1;">
+                <div class="hud-header" style="background: linear-gradient(90deg, rgba(251,191,36,0.3), rgba(251,191,36,0.1)); border-color: rgba(251,191,36,0.4);">
+                    <span class="lunar">MOON TRAJECTORY</span>
+                </div>
+                <div class="moon-prediction">
+                    <div class="moon-prediction-row">
+                        <span class="text-gray-400">Current Distance</span>
+                        <span class="lunar font-mono" id="moon-dist">--- km</span>
                     </div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Velocity</div>
-                    <div class="metric-value">
-                        <span id="artemis-vel">---</span>
-                        <span class="metric-unit">m/s</span>
+                    <div class="moon-prediction-row">
+                        <span class="text-gray-400">Phase</span>
+                        <span class="font-mono" id="moon-phase">---</span>
                     </div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Mission Phase</div>
-                    <div class="metric-value artemis" id="artemis-phase" style="font-size: 14px;">ACQUIRING...</div>
-                </div>
-                <div class="metric" style="border-bottom: none;">
-                    <div class="metric-label">Data Source</div>
-                    <div class="metric-value" style="font-size: 11px; color: rgba(160,190,220,0.7);">NASA JPL HORIZONS</div>
+                    <div class="moon-prediction-row">
+                        <span class="text-gray-400">Orbital Period</span>
+                        <span class="font-mono">27.3 days</span>
+                    </div>
+                    <div class="moon-prediction-row">
+                        <span class="text-gray-400">Next Perigee</span>
+                        <span class="lunar font-mono" id="moon-perigee">---</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -158,7 +279,7 @@
         <!-- Center - Viewport -->
         <div class="flex-1"></div>
 
-        <!-- Right Panel - ISS & Moon -->
+        <!-- Right Panel - ISS & System -->
         <div class="w-80 flex flex-col m-3 mt-16 gap-3">
             <!-- ISS Panel -->
             <div class="hud-panel flex flex-col" style="flex: 1;">
@@ -168,56 +289,43 @@
                 </div>
                 <div class="p-3">
                     <div class="flex justify-between mb-2">
-                        <span class="text-xs text-gray-400">LAT</span>
+                        <span class="text-xs text-gray-400">LATITUDE</span>
                         <span class="iss font-mono" id="iss-lat">--.--°</span>
                     </div>
                     <div class="flex justify-between mb-2">
-                        <span class="text-xs text-gray-400">LON</span>
+                        <span class="text-xs text-gray-400">LONGITUDE</span>
                         <span class="iss font-mono" id="iss-lon">--.--°</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-xs text-gray-400">ALT</span>
+                        <span class="text-xs text-gray-400">ALTITUDE</span>
                         <span class="font-mono" id="iss-alt">--- km</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Moon Panel -->
-            <div class="hud-panel flex flex-col" style="flex: 1;">
-                <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(251,191,36,0.3), rgba(251,191,36,0.1)); border-color: rgba(251,191,36,0.4);">
-                    <span class="lunar">MOON // POSITION</span>
-                    <span class="text-xs text-yellow-600">● TRACKED</span>
-                </div>
-                <div class="p-3">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-xs text-gray-400">DISTANCE</span>
-                        <span class="lunar font-mono" id="moon-dist">--- km</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                        <span class="text-xs text-gray-400">PHASE</span>
-                        <span class="font-mono" id="moon-phase">---</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-xs text-gray-400">ILLUMINATION</span>
-                        <span class="font-mono" id="moon-illum">--%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Log -->
+            <!-- System Log -->
             <div class="hud-panel flex flex-col" style="flex: 1.5;">
                 <div class="hud-header text-xs">SYSTEM LOG</div>
                 <div id="log" class="flex-1"></div>
             </div>
+            
+            <!-- Camera Controls -->
+            <div class="hud-panel p-3">
+                <div class="text-xs text-gray-400 mb-2">CAMERA PRESETS</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="orbit-btn text-xs py-2" onclick="setCameraTarget('artemis-chase')">CHASE ARTEMIS</button>
+                    <button class="orbit-btn text-xs py-2" onclick="setCameraTarget('artemis-pov')">ARTEMIS POV</button>
+                    <button class="orbit-btn text-xs py-2" onclick="setCameraTarget('earth')">EARTH VIEW</button>
+                    <button class="orbit-btn text-xs py-2" onclick="setCameraTarget('moon-orbit')">MOON ORBIT</button>
+                    <button class="orbit-btn text-xs py-2" onclick="setCameraTarget('system-wide')">SYSTEM WIDE</button>
+                    <button class="orbit-btn text-xs py-2 active" onclick="setCameraTarget('free')">FREE CAMERA</button>
+                </div>
+            </div>
         </div>
     </div>
     
-    <div class="orbit-controls">
-        <button class="orbit-btn active" onclick="setCameraTarget('earth')">EARTH</button>
-        <button class="orbit-btn" onclick="setCameraTarget('artemis')">ARTEMIS II</button>
-        <button class="orbit-btn" onclick="setCameraTarget('moon')">MOON</button>
-        <button class="orbit-btn" onclick="setCameraTarget('iss')">ISS</button>
-        <button class="orbit-btn" onclick="setCameraTarget('system')">SYSTEM</button>
+    <div class="camera-hint">
+        🖱️ LEFT CLICK: Rotate | RIGHT CLICK: Pan | SCROLL: Zoom | DOUBLE CLICK: Reset
     </div>
 
     <script type="module">
@@ -230,10 +338,10 @@
         // ========== SCENE ==========
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000205);
-        scene.fog = new THREE.FogExp2(0x000205, 0.0002);
+        scene.fog = new THREE.FogExp2(0x000205, 0.0001);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50000);
-        camera.position.set(0, 50, 150);
+        camera.position.set(50, 30, 80);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -251,8 +359,14 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.minDistance = 10;
-        controls.maxDistance = 1000;
+        controls.minDistance = 5;
+        controls.maxDistance = 2000;
+        controls.enablePan = true;
+        controls.mouseButtons = {
+            LEFT: THREE.MOUSE.ROTATE,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.PAN
+        };
 
         // ========== EARTH ==========
         const earthGroup = new THREE.Group();
@@ -271,7 +385,6 @@
         earth.castShadow = true; earth.receiveShadow = true;
         earthGroup.add(earth);
 
-        // Atmosphere
         earthGroup.add(new THREE.Mesh(
             new THREE.SphereGeometry(10.3, 64, 64),
             new THREE.MeshBasicMaterial({
@@ -280,7 +393,6 @@
             })
         ));
 
-        // Night lights
         const nightLights = new THREE.Mesh(
             new THREE.SphereGeometry(10.05, 64, 64),
             new THREE.MeshBasicMaterial({
@@ -290,7 +402,6 @@
         );
         earthGroup.add(nightLights);
 
-        // Clouds
         const clouds = new THREE.Mesh(
             new THREE.SphereGeometry(10.2, 64, 64),
             new THREE.MeshStandardMaterial({
@@ -300,31 +411,53 @@
         );
         earthGroup.add(clouds);
 
-        // ========== MOON ==========
-        const moonOrbitRadius = 60; // 6x Earth radius for visibility
+        // ========== MOON SYSTEM ==========
+        const moonOrbitRadius = 60;
         const moonGroup = new THREE.Group();
         scene.add(moonGroup);
 
         const moon = new THREE.Mesh(
-            new THREE.SphereGeometry(2.7, 64, 64), // Moon is ~27% Earth size
+            new THREE.SphereGeometry(2.7, 64, 64),
             new THREE.MeshStandardMaterial({
                 map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/moon-texture.jpg'),
-                color: 0xdddddd,
-                metalness: 0.0, roughness: 0.9
+                color: 0xdddddd, metalness: 0.0, roughness: 0.9
             })
         );
         moon.castShadow = true; moon.receiveShadow = true;
         moonGroup.add(moon);
 
         // Moon orbit line
-        const moonOrbitLine = new THREE.Line(
-            new THREE.RingGeometry(moonOrbitRadius - 0.1, moonOrbitRadius + 0.1, 128),
-            new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+        const moonOrbitCurve = new THREE.EllipseCurve(
+            0, 0, moonOrbitRadius, moonOrbitRadius * 0.95, 0, 2 * Math.PI, false, 0
         );
-        moonOrbitLine.rotation.x = Math.PI / 2;
+        const moonOrbitPoints = moonOrbitCurve.getPoints(100);
+        const moonOrbitGeometry = new THREE.BufferGeometry().setFromPoints(
+            moonOrbitPoints.map(p => new THREE.Vector3(p.x, 0, p.y))
+        );
+        const moonOrbitLine = new THREE.Line(
+            moonOrbitGeometry,
+            new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.3 })
+        );
         scene.add(moonOrbitLine);
 
-        // Moon glow
+        // Future moon trajectory (prediction)
+        const futureMoonCurve = new THREE.EllipseCurve(
+            0, 0, moonOrbitRadius, moonOrbitRadius * 0.95, 0, Math.PI, false, 0
+        );
+        const futureMoonPoints = futureMoonCurve.getPoints(50);
+        const futureMoonGeometry = new THREE.BufferGeometry().setFromPoints(
+            futureMoonPoints.map(p => new THREE.Vector3(p.x, 0, p.y))
+        );
+        const futureMoonLine = new THREE.Line(
+            futureMoonGeometry,
+            new THREE.LineDashedMaterial({ 
+                color: 0xfbbf24, transparent: true, opacity: 0.15,
+                dashSize: 2, gapSize: 2
+            })
+        );
+        futureMoonLine.computeLineDistances();
+        scene.add(futureMoonLine);
+
         moonGroup.add(new THREE.Mesh(
             new THREE.SphereGeometry(3, 32, 32),
             new THREE.MeshBasicMaterial({
@@ -333,30 +466,17 @@
             })
         ));
 
-        // ========== ARTEMIS II (DETAILED ORION MODEL) ==========
+        // ========== ARTEMIS II DETAILED MODEL ==========
         const artemisGroup = new THREE.Group();
         scene.add(artemisGroup);
 
-        // Materials
-        const whiteMetalMat = new THREE.MeshStandardMaterial({ 
-            color: 0xf5f5f5, metalness: 0.6, roughness: 0.3 
-        });
-        const heatShieldMat = new THREE.MeshStandardMaterial({ 
-            color: 0x8b4513, metalness: 0.2, roughness: 0.9 
-        });
-        const goldFoilMat = new THREE.MeshStandardMaterial({ 
-            color: 0xd4af37, metalness: 0.9, roughness: 0.2,
-            emissive: 0x332200, emissiveIntensity: 0.1
-        });
-        const solarPanelMat = new THREE.MeshStandardMaterial({ 
-            color: 0x1a237e, metalness: 0.5, roughness: 0.3,
-            emissive: 0x0a0a3e, emissiveIntensity: 0.2
-        });
-        const engineMat = new THREE.MeshStandardMaterial({ 
-            color: 0x333333, metalness: 0.8, roughness: 0.4 
-        });
+        const whiteMetalMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, metalness: 0.6, roughness: 0.3 });
+        const heatShieldMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, metalness: 0.2, roughness: 0.9 });
+        const goldFoilMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2, emissive: 0x332200, emissiveIntensity: 0.1 });
+        const solarPanelMat = new THREE.MeshStandardMaterial({ color: 0x1a237e, metalness: 0.5, roughness: 0.3, emissive: 0x0a0a3e, emissiveIntensity: 0.2 });
+        const engineMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.4 });
 
-        // 1. Crew Module (Blunt cone/heat shield)
+        // Crew Module
         const crewModule = new THREE.Mesh(
             new THREE.SphereGeometry(0.35, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.65),
             whiteMetalMat
@@ -365,126 +485,75 @@
         crewModule.position.y = 0.4;
         artemisGroup.add(crewModule);
 
-        // Heat shield (bottom)
-        const heatShield = new THREE.Mesh(
-            new THREE.CircleGeometry(0.35, 32),
-            heatShieldMat
-        );
+        const heatShield = new THREE.Mesh(new THREE.CircleGeometry(0.35, 32), heatShieldMat);
         heatShield.rotation.x = Math.PI / 2;
         heatShield.position.y = 0.05;
         artemisGroup.add(heatShield);
 
-        // 2. Service Module (Cylinder)
+        // Service Module
         const serviceModule = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32),
-            whiteMetalMat
+            new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), whiteMetalMat
         );
         serviceModule.position.y = -0.4;
         artemisGroup.add(serviceModule);
 
-        // Service module details (rings)
         const smRing1 = new THREE.Mesh(
-            new THREE.TorusGeometry(0.33, 0.02, 8, 32),
-            goldFoilMat
+            new THREE.TorusGeometry(0.33, 0.02, 8, 32), goldFoilMat
         );
         smRing1.rotation.x = Math.PI / 2;
         smRing1.position.y = -0.1;
         artemisGroup.add(smRing1);
 
         const smRing2 = new THREE.Mesh(
-            new THREE.TorusGeometry(0.33, 0.02, 8, 32),
-            goldFoilMat
+            new THREE.TorusGeometry(0.33, 0.02, 8, 32), goldFoilMat
         );
         smRing2.rotation.x = Math.PI / 2;
         smRing2.position.y = -0.7;
         artemisGroup.add(smRing2);
 
-        // 3. Engine nozzle
+        // Engine
         const engineNozzle = new THREE.Mesh(
-            new THREE.ConeGeometry(0.15, 0.3, 16, 1, true),
-            engineMat
+            new THREE.ConeGeometry(0.15, 0.3, 16, 1, true), engineMat
         );
         engineNozzle.position.y = -0.95;
         artemisGroup.add(engineNozzle);
 
-        // Engine glow
         const engineGlow = new THREE.Mesh(
             new THREE.CircleGeometry(0.12, 16),
-            new THREE.MeshBasicMaterial({ 
-                color: 0xff6600, transparent: true, opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            })
+            new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending })
         );
         engineGlow.rotation.x = Math.PI / 2;
         engineGlow.position.y = -1.05;
         artemisGroup.add(engineGlow);
 
-        // 4. Solar Arrays (4 panels in X configuration)
+        // Solar Arrays
         const panelGeo = new THREE.BoxGeometry(1.2, 0.02, 0.4);
-        
-        // Panel 1
         const panel1 = new THREE.Mesh(panelGeo, solarPanelMat);
         panel1.position.set(1.0, -0.3, 0);
         panel1.rotation.z = 0.1;
         artemisGroup.add(panel1);
         
-        // Panel 2
         const panel2 = new THREE.Mesh(panelGeo, solarPanelMat);
         panel2.position.set(-1.0, -0.3, 0);
         panel2.rotation.z = -0.1;
         artemisGroup.add(panel2);
         
-        // Panel 3
         const panel3 = new THREE.Mesh(panelGeo, solarPanelMat);
         panel3.position.set(0, -0.3, 1.0);
         panel3.rotation.x = 0.1;
         artemisGroup.add(panel3);
         
-        // Panel 4
         const panel4 = new THREE.Mesh(panelGeo, solarPanelMat);
         panel4.position.set(0, -0.3, -1.0);
         panel4.rotation.x = -0.1;
         artemisGroup.add(panel4);
 
-        // Panel supports
-        const supportGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.6);
-        const supportMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7 });
-        
-        const support1 = new THREE.Mesh(supportGeo, supportMat);
-        support1.rotation.z = Math.PI / 2;
-        support1.position.set(0.5, -0.3, 0);
-        artemisGroup.add(support1);
-        
-        const support2 = new THREE.Mesh(supportGeo, supportMat);
-        support2.rotation.z = Math.PI / 2;
-        support2.position.set(-0.5, -0.3, 0);
-        artemisGroup.add(support2);
-
-        // 5. Navigation lights
-        const navLightGeo = new THREE.SphereGeometry(0.05, 8, 8);
-        const navLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const navLight = new THREE.Mesh(navLightGeo, navLightMat);
-        navLight.position.set(0, 0.5, 0.3);
-        artemisGroup.add(navLight);
-
-        // 6. Artemis glow
-        const artemisGlow = new THREE.Mesh(
-            new THREE.SphereGeometry(1.5, 16, 16),
-            new THREE.MeshBasicMaterial({
-                color: 0xf472b6, transparent: true, opacity: 0.15,
-                blending: THREE.AdditiveBlending
-            })
-        );
-        artemisGlow.position.y = -0.2;
-        artemisGroup.add(artemisGlow);
-
-        // Scale the entire model
         artemisGroup.scale.set(0.4, 0.4, 0.4);
 
-        // Artemis trail
+        // Artemis trajectory trail
         const artemisTrail = new THREE.Line(
             new THREE.BufferGeometry(),
-            new THREE.LineBasicMaterial({ color: 0xf472b6, transparent: true, opacity: 0.5 })
+            new THREE.LineBasicMaterial({ color: 0xf472b6, transparent: true, opacity: 0.6 })
         );
         scene.add(artemisTrail);
         const artemisTrailPoints = [];
@@ -493,26 +562,15 @@
         const issGroup = new THREE.Group();
         scene.add(issGroup);
 
-        const issMesh = new THREE.Mesh(
+        issGroup.add(new THREE.Mesh(
             new THREE.BoxGeometry(0.5, 0.15, 0.3),
             new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.3 })
-        );
-        issGroup.add(issMesh);
+        ));
 
-        const issPanels = new THREE.Mesh(
+        issGroup.add(new THREE.Mesh(
             new THREE.BoxGeometry(2.5, 0.03, 0.8),
             new THREE.MeshStandardMaterial({ color: 0x1a3a5c, emissive: 0x0a1a2a, emissiveIntensity: 0.3 })
-        );
-        issGroup.add(issPanels);
-
-        const issGlow = new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 16, 16),
-            new THREE.MeshBasicMaterial({
-                color: 0x60a5fa, transparent: true, opacity: 0.3,
-                blending: THREE.AdditiveBlending
-            })
-        );
-        issGroup.add(issGlow);
+        ));
 
         // ========== LIGHTING ==========
         const sunLight = new THREE.DirectionalLight(0xffffff, 2);
@@ -520,23 +578,15 @@
         sunLight.castShadow = true;
         scene.add(sunLight);
 
-        const sunGlow = new THREE.Mesh(
-            new THREE.SphereGeometry(5, 32, 32),
-            new THREE.MeshBasicMaterial({ color: 0xffdd88, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending })
-        );
-        sunGlow.position.copy(sunLight.position);
-        scene.add(sunGlow);
-
         scene.add(new THREE.AmbientLight(0x404040, 0.3));
 
         // ========== STARS ==========
-        const stars = new THREE.Points(
+        scene.add(new THREE.Points(
             new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(
                 Array.from({length: 6000}, () => (Math.random() - 0.5) * 2000), 3
             )),
             new THREE.PointsMaterial({ color: 0x88ccff, size: 1.5, transparent: true, opacity: 0.8 })
-        );
-        scene.add(stars);
+        ));
 
         // ========== LOGGING ==========
         const log = document.getElementById('log');
@@ -551,8 +601,9 @@
             if (log.children.length > 20) log.removeChild(log.firstChild);
         }
 
-        // ========== DATA FETCHING ==========
-        let artemisData = null, issData = null, moonData = { distance: 384400, phase: 'Waxing Gibbous', illumination: 78 };
+        // ========== DATA ==========
+        let artemisData = null, issData = null;
+        let cameraMode = 'free';
 
         async function updateArtemis() {
             try {
@@ -565,9 +616,7 @@
                 const res = await fetch(url.replace(/'/g, '%27').replace(/ /g, '%20'));
                 const data = await res.json();
                 
-                if (!data.result || !data.result.includes('$$SOE')) {
-                    throw new Error('No ephemeris data');
-                }
+                if (!data.result || !data.result.includes('$$SOE')) throw new Error('No data');
                 
                 const vectorBlock = data.result.split('$$SOE')[1].split('$$EOE')[0];
                 
@@ -593,28 +642,35 @@
                 
                 artemisData = { x, y, z, distKm, velMs, moonDistKm, phase };
                 
-                document.getElementById('artemis-dist').textContent = Math.floor(distKm).toLocaleString();
-                document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDistKm).toLocaleString();
-                document.getElementById('artemis-vel').textContent = Math.floor(velMs).toLocaleString();
+                document.getElementById('artemis-dist').textContent = Math.floor(distKm).toLocaleString() + ' km';
+                document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDistKm).toLocaleString() + ' km';
+                document.getElementById('artemis-vel').textContent = Math.floor(velMs).toLocaleString() + ' m/s';
                 document.getElementById('artemis-phase').textContent = phase;
                 
-                // Position in 3D (scale: 1 unit = 1000 km for visibility)
+                // Update timeline
+                document.querySelectorAll('.timeline-item').forEach(el => {
+                    el.classList.remove('active');
+                    if (el.id === 'timeline-current') {
+                        el.querySelector('.timeline-title').textContent = phase;
+                        el.classList.add('active');
+                    }
+                });
+                
                 const scale = 0.01;
                 artemisGroup.position.set(x * scale, y * scale, z * scale);
                 artemisGroup.lookAt(0, 0, 0);
                 
-                // Update trail
                 artemisTrailPoints.push(artemisGroup.position.x, artemisGroup.position.y, artemisGroup.position.z);
                 if (artemisTrailPoints.length > 150) artemisTrailPoints.splice(0, 3);
                 artemisTrail.geometry.setAttribute('position', new THREE.Float32BufferAttribute(artemisTrailPoints, 3));
                 
-                addLog(`Artemis: ${Math.floor(distKm).toLocaleString()} km from Earth [${phase}]`, 'artemis');
+                addLog(`Artemis: ${Math.floor(distKm).toLocaleString()} km [${phase}]`, 'artemis');
                 
             } catch(e) {
-                addLog(`Artemis data: ${e.message}`, 'error');
-                // Use fallback position for demo
-                const angle = Date.now() * 0.0001;
-                const r = 35;
+                addLog(`Artemis: ${e.message}`, 'error');
+                // Fallback demo position
+                const angle = Date.now() * 0.00005;
+                const r = 35 + Math.sin(angle * 0.5) * 10;
                 artemisGroup.position.set(Math.cos(angle) * r, Math.sin(angle * 0.3) * 5, Math.sin(angle) * r);
             }
         }
@@ -628,7 +684,6 @@
                 document.getElementById('iss-lon').textContent = issData.longitude.toFixed(2) + '°';
                 document.getElementById('iss-alt').textContent = issData.altitude.toFixed(1) + ' km';
                 
-                // ISS position (scale: Earth radius = 10 units)
                 const phi = (90 - issData.latitude) * Math.PI / 180;
                 const theta = (issData.longitude + 180) * Math.PI / 180;
                 const r = 10 + issData.altitude / 6371 * 10;
@@ -640,55 +695,68 @@
                 );
                 issGroup.lookAt(0, 0, 0);
                 
-                if (Date.now() % 30000 < 6000) {
-                    addLog(`ISS: ${issData.latitude.toFixed(1)}°, ${issData.longitude.toFixed(1)}°`, 'iss');
-                }
             } catch(e) {
                 addLog(`ISS error: ${e.message}`, 'error');
             }
         }
 
         function updateMoon() {
-            // Moon orbit: 27.3 days, elliptical
             const now = new Date();
             const daysSinceEpoch = (now - new Date(2026, 0, 1)) / 86400000;
             const angle = (daysSinceEpoch / 27.3) * Math.PI * 2;
             
-            // Simple elliptical orbit
-            const a = 60; // semi-major axis (scaled)
-            const e = 0.0549; // eccentricity
+            const a = 60;
+            const e = 0.0549;
             const r = a * (1 - e*e) / (1 + e * Math.cos(angle));
             
             moonGroup.position.set(
                 r * Math.cos(angle),
                 0,
-                r * Math.sin(angle) * 0.9 // Slight inclination
+                r * Math.sin(angle) * 0.9
             );
             
-            // Update moon data display
-            const distKm = 384400 + Math.sin(angle) * 21000; // varies 363k-405k
+            // Update future trajectory to start from current position
+            const futureAngle = angle + Math.PI;
+            futureMoonLine.rotation.y = angle;
+            
+            const distKm = 384400 + Math.sin(angle) * 21000;
             document.getElementById('moon-dist').textContent = Math.floor(distKm).toLocaleString() + ' km';
-            document.getElementById('moon-phase').textContent = moonData.phase;
-            document.getElementById('moon-illum').textContent = moonData.illumination + '%';
+            document.getElementById('moon-phase').textContent = 'Waxing Gibbous';
+            
+            // Calculate next perigee
+            const daysToPerigee = (Math.floor(daysSinceEpoch / 27.3) + 1) * 27.3 - daysSinceEpoch;
+            const perigeeDate = new Date(now.getTime() + daysToPerigee * 86400000);
+            document.getElementById('moon-perigee').textContent = perigeeDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        // ========== CAMERA TARGETS ==========
+        // ========== CAMERA SYSTEM ==========
         window.setCameraTarget = function(target) {
             document.querySelectorAll('.orbit-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
+            cameraMode = target;
             
-            if (target === 'earth') {
-                controls.target.set(0, 0, 0);
-                camera.position.set(0, 30, 80);
-            } else if (target === 'artemis' && artemisData) {
-                controls.target.copy(artemisGroup.position);
-            } else if (target === 'moon') {
-                controls.target.copy(moonGroup.position);
-            } else if (target === 'iss') {
-                controls.target.copy(issGroup.position);
-            } else if (target === 'system') {
-                controls.target.set(20, 0, 20);
-                camera.position.set(80, 60, 80);
+            switch(target) {
+                case 'earth':
+                    controls.target.set(0, 0, 0);
+                    camera.position.set(30, 20, 50);
+                    break;
+                case 'artemis-chase':
+                    // Will be handled in animate loop
+                    break;
+                case 'artemis-pov':
+                    // Will be handled in animate loop
+                    break;
+                case 'moon-orbit':
+                    controls.target.copy(moonGroup.position);
+                    camera.position.set(moonGroup.position.x + 20, 10, moonGroup.position.z + 20);
+                    break;
+                case 'system-wide':
+                    controls.target.set(0, 0, 0);
+                    camera.position.set(100, 80, 100);
+                    break;
+                case 'free':
+                    // Keep current position
+                    break;
             }
         };
 
@@ -700,10 +768,16 @@
             clouds.rotation.y += 0.0007;
             nightLights.rotation.y += 0.0005;
             
-            artemisGroup.children[artemisGroup.children.length - 1].scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.2);
-            issGlow.scale.setScalar(1 + Math.sin(Date.now() * 0.003) * 0.15);
-            
-            updateMoon();
+            // Camera follow modes
+            if (cameraMode === 'artemis-chase' && artemisGroup) {
+                const offset = new THREE.Vector3(10, 5, 10);
+                camera.position.copy(artemisGroup.position).add(offset);
+                controls.target.copy(artemisGroup.position);
+            } else if (cameraMode === 'artemis-pov' && artemisGroup) {
+                camera.position.copy(artemisGroup.position);
+                camera.position.y += 2;
+                controls.target.set(0, 0, 0);
+            }
             
             controls.update();
             composer.render();
@@ -717,12 +791,17 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        window.addEventListener('dblclick', () => {
+            camera.position.set(50, 30, 80);
+            controls.target.set(0, 0, 0);
+            cameraMode = 'free';
+        });
+
         addLog('═══════════════════════════════', 'info');
-        addLog('ORBITAL COMMAND SYSTEM ONLINE', 'info');
+        addLog('ARTEMIS MISSION CONTROL ONLINE', 'info');
         addLog('═══════════════════════════════', 'info');
-        addLog('Artemis II: NASA JPL HORIZONS', 'artemis');
-        addLog('ISS: wheretheiss.at API', 'iss');
-        addLog('Moon: Ephemeris calculation', 'lunar');
+        addLog('Free camera controls active', 'info');
+        addLog('Mouse: Rotate | Right: Pan | Scroll: Zoom', 'info');
 
         updateArtemis();
         updateISS();
@@ -730,8 +809,7 @@
         setInterval(updateISS, 5000);
 
         animate();
-        
-        addLog('All systems operational', 'info');
+        addLog('All systems operational', 'data');
     </script>
 </body>
 </html>
