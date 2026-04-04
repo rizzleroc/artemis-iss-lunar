@@ -333,25 +333,153 @@
             })
         ));
 
-        // ========== ARTEMIS II ==========
+        // ========== ARTEMIS II (DETAILED ORION MODEL) ==========
         const artemisGroup = new THREE.Group();
         scene.add(artemisGroup);
 
-        const artemisBody = new THREE.Mesh(
-            new THREE.ConeGeometry(0.3, 1, 8),
-            new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.8, roughness: 0.2 })
-        );
-        artemisBody.rotation.x = Math.PI;
-        artemisGroup.add(artemisBody);
+        // Materials
+        const whiteMetalMat = new THREE.MeshStandardMaterial({ 
+            color: 0xf5f5f5, metalness: 0.6, roughness: 0.3 
+        });
+        const heatShieldMat = new THREE.MeshStandardMaterial({ 
+            color: 0x8b4513, metalness: 0.2, roughness: 0.9 
+        });
+        const goldFoilMat = new THREE.MeshStandardMaterial({ 
+            color: 0xd4af37, metalness: 0.9, roughness: 0.2,
+            emissive: 0x332200, emissiveIntensity: 0.1
+        });
+        const solarPanelMat = new THREE.MeshStandardMaterial({ 
+            color: 0x1a237e, metalness: 0.5, roughness: 0.3,
+            emissive: 0x0a0a3e, emissiveIntensity: 0.2
+        });
+        const engineMat = new THREE.MeshStandardMaterial({ 
+            color: 0x333333, metalness: 0.8, roughness: 0.4 
+        });
 
-        const artemisGlow = new THREE.Mesh(
-            new THREE.SphereGeometry(0.8, 16, 16),
-            new THREE.MeshBasicMaterial({
-                color: 0xf472b6, transparent: true, opacity: 0.4,
+        // 1. Crew Module (Blunt cone/heat shield)
+        const crewModule = new THREE.Mesh(
+            new THREE.SphereGeometry(0.35, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.65),
+            whiteMetalMat
+        );
+        crewModule.rotation.x = Math.PI;
+        crewModule.position.y = 0.4;
+        artemisGroup.add(crewModule);
+
+        // Heat shield (bottom)
+        const heatShield = new THREE.Mesh(
+            new THREE.CircleGeometry(0.35, 32),
+            heatShieldMat
+        );
+        heatShield.rotation.x = Math.PI / 2;
+        heatShield.position.y = 0.05;
+        artemisGroup.add(heatShield);
+
+        // 2. Service Module (Cylinder)
+        const serviceModule = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32),
+            whiteMetalMat
+        );
+        serviceModule.position.y = -0.4;
+        artemisGroup.add(serviceModule);
+
+        // Service module details (rings)
+        const smRing1 = new THREE.Mesh(
+            new THREE.TorusGeometry(0.33, 0.02, 8, 32),
+            goldFoilMat
+        );
+        smRing1.rotation.x = Math.PI / 2;
+        smRing1.position.y = -0.1;
+        artemisGroup.add(smRing1);
+
+        const smRing2 = new THREE.Mesh(
+            new THREE.TorusGeometry(0.33, 0.02, 8, 32),
+            goldFoilMat
+        );
+        smRing2.rotation.x = Math.PI / 2;
+        smRing2.position.y = -0.7;
+        artemisGroup.add(smRing2);
+
+        // 3. Engine nozzle
+        const engineNozzle = new THREE.Mesh(
+            new THREE.ConeGeometry(0.15, 0.3, 16, 1, true),
+            engineMat
+        );
+        engineNozzle.position.y = -0.95;
+        artemisGroup.add(engineNozzle);
+
+        // Engine glow
+        const engineGlow = new THREE.Mesh(
+            new THREE.CircleGeometry(0.12, 16),
+            new THREE.MeshBasicMaterial({ 
+                color: 0xff6600, transparent: true, opacity: 0.8,
                 blending: THREE.AdditiveBlending
             })
         );
+        engineGlow.rotation.x = Math.PI / 2;
+        engineGlow.position.y = -1.05;
+        artemisGroup.add(engineGlow);
+
+        // 4. Solar Arrays (4 panels in X configuration)
+        const panelGeo = new THREE.BoxGeometry(1.2, 0.02, 0.4);
+        
+        // Panel 1
+        const panel1 = new THREE.Mesh(panelGeo, solarPanelMat);
+        panel1.position.set(1.0, -0.3, 0);
+        panel1.rotation.z = 0.1;
+        artemisGroup.add(panel1);
+        
+        // Panel 2
+        const panel2 = new THREE.Mesh(panelGeo, solarPanelMat);
+        panel2.position.set(-1.0, -0.3, 0);
+        panel2.rotation.z = -0.1;
+        artemisGroup.add(panel2);
+        
+        // Panel 3
+        const panel3 = new THREE.Mesh(panelGeo, solarPanelMat);
+        panel3.position.set(0, -0.3, 1.0);
+        panel3.rotation.x = 0.1;
+        artemisGroup.add(panel3);
+        
+        // Panel 4
+        const panel4 = new THREE.Mesh(panelGeo, solarPanelMat);
+        panel4.position.set(0, -0.3, -1.0);
+        panel4.rotation.x = -0.1;
+        artemisGroup.add(panel4);
+
+        // Panel supports
+        const supportGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.6);
+        const supportMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7 });
+        
+        const support1 = new THREE.Mesh(supportGeo, supportMat);
+        support1.rotation.z = Math.PI / 2;
+        support1.position.set(0.5, -0.3, 0);
+        artemisGroup.add(support1);
+        
+        const support2 = new THREE.Mesh(supportGeo, supportMat);
+        support2.rotation.z = Math.PI / 2;
+        support2.position.set(-0.5, -0.3, 0);
+        artemisGroup.add(support2);
+
+        // 5. Navigation lights
+        const navLightGeo = new THREE.SphereGeometry(0.05, 8, 8);
+        const navLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const navLight = new THREE.Mesh(navLightGeo, navLightMat);
+        navLight.position.set(0, 0.5, 0.3);
+        artemisGroup.add(navLight);
+
+        // 6. Artemis glow
+        const artemisGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(1.5, 16, 16),
+            new THREE.MeshBasicMaterial({
+                color: 0xf472b6, transparent: true, opacity: 0.15,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        artemisGlow.position.y = -0.2;
         artemisGroup.add(artemisGlow);
+
+        // Scale the entire model
+        artemisGroup.scale.set(0.4, 0.4, 0.4);
 
         // Artemis trail
         const artemisTrail = new THREE.Line(
@@ -572,7 +700,7 @@
             clouds.rotation.y += 0.0007;
             nightLights.rotation.y += 0.0005;
             
-            artemisGlow.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.2);
+            artemisGroup.children[artemisGroup.children.length - 1].scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.2);
             issGlow.scale.setScalar(1 + Math.sin(Date.now() * 0.003) * 0.15);
             
             updateMoon();
