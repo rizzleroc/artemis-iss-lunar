@@ -407,7 +407,7 @@
         sunLight.castShadow = true;
         scene.add(sunLight);
 
-        // ========== CONTROLS - FIXED ==========
+        // ========== CONTROLS ==========
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -422,79 +422,6 @@
             MIDDLE: THREE.MOUSE.DOLLY,
             RIGHT: THREE.MOUSE.PAN
         };
-        
-        // Touch: 1 finger rotate, 2 finger pan, pinch zoom
-        controls.touches = {
-            ONE: THREE.TOUCH.ROTATE,
-            TWO: THREE.TOUCH.PAN
-        };
-
-        // Keyboard controls - unified handler
-        const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-        
-        document.addEventListener('keydown', (e) => {
-            const key = e.key;
-            if (keys.hasOwnProperty(key) || key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
-                keys[key] = true;
-            }
-            // Number keys for camera
-            if (key >= '1' && key <= '6') {
-                const idx = parseInt(key) - 1;
-                const btn = document.querySelectorAll('.camera-btn')[idx];
-                if (btn) btn.click();
-            }
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            const key = e.key;
-            if (keys.hasOwnProperty(key) || key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
-                keys[key] = false;
-            }
-        });
-        
-        function handleKeyboard() {
-            const speed = camera.position.distanceTo(controls.target) * 0.03;
-            const forward = new THREE.Vector3();
-            const right = new THREE.Vector3();
-            let moved = false;
-            
-            if (keys['w'] || keys['ArrowUp']) {
-                forward.subVectors(controls.target, camera.position).normalize();
-                forward.y = 0; 
-                if (forward.length() > 0) {
-                    forward.normalize().multiplyScalar(speed);
-                    controls.target.add(forward); 
-                    camera.position.add(forward);
-                    moved = true;
-                }
-            }
-            if (keys['s'] || keys['ArrowDown']) {
-                forward.subVectors(controls.target, camera.position).normalize();
-                forward.y = 0;
-                if (forward.length() > 0) {
-                    forward.normalize().multiplyScalar(-speed);
-                    controls.target.add(forward); 
-                    camera.position.add(forward);
-                    moved = true;
-                }
-            }
-            if (keys['a'] || keys['ArrowLeft']) {
-                forward.subVectors(controls.target, camera.position).normalize();
-                right.crossVectors(forward, camera.up).normalize().multiplyScalar(-speed);
-                controls.target.add(right); 
-                camera.position.add(right);
-                moved = true;
-            }
-            if (keys['d'] || keys['ArrowRight']) {
-                forward.subVectors(controls.target, camera.position).normalize();
-                right.crossVectors(forward, camera.up).normalize().multiplyScalar(speed);
-                controls.target.add(right); 
-                camera.position.add(right);
-                moved = true;
-            }
-            
-            if (moved) controls.update();
-        }
 
         // ========== CELESTIAL BODIES ==========
         const textureLoader = new THREE.TextureLoader();
@@ -512,8 +439,6 @@
         
         const earth = new THREE.Mesh(new THREE.SphereGeometry(10, 128, 128), earthMat);
         earthGroup.add(earth);
-        
-        // Atmosphere
         earthGroup.add(new THREE.Mesh(
             new THREE.SphereGeometry(10.4, 64, 64),
             new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.12, side: THREE.BackSide, blending: THREE.AdditiveBlending })
@@ -530,15 +455,13 @@
             () => addLog('Moon texture failed', 'error')
         );
         
-        const moon = new THREE.Mesh(new THREE.SphereGeometry(2.7, 64, 64), moonMat);
-        moonGroup.add(moon);
+        moonGroup.add(new THREE.Mesh(new THREE.SphereGeometry(2.7, 64, 64), moonMat));
 
         // Planets
         const planetsGroup = new THREE.Group();
         scene.add(planetsGroup);
 
         // ========== SPACECRAFT ==========
-        // Artemis II - detailed model
         const artemisGroup = new THREE.Group();
         scene.add(artemisGroup);
         
@@ -555,19 +478,18 @@
         artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x333333 })).translateY(-1.0));
         artemisGroup.scale.set(0.5, 0.5, 0.5);
 
-        // ISS
         const issGroup = new THREE.Group();
         scene.add(issGroup);
         issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })));
-        const module1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), whiteMetal);
-        module1.rotation.z = Math.PI / 2;
-        issGroup.add(module1);
-        const solar1 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
-        solar1.position.set(0, 0.5, 1.5);
-        issGroup.add(solar1);
-        const solar2 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
-        solar2.position.set(0, 0.5, -1.5);
-        issGroup.add(solar2);
+        const mod1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), whiteMetal);
+        mod1.rotation.z = Math.PI / 2;
+        issGroup.add(mod1);
+        const sol1 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
+        sol1.position.set(0, 0.5, 1.5);
+        issGroup.add(sol1);
+        const sol2 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
+        sol2.position.set(0, 0.5, -1.5);
+        issGroup.add(sol2);
 
         // Stars
         const starsGeo = new THREE.BufferGeometry();
@@ -621,7 +543,6 @@
         }
 
         function updateUI() {
-            // Artemis (FOCUS)
             if (allData.artemis) {
                 document.getElementById('artemis-dist').textContent = allData.artemis.distKm.toLocaleString() + ' km';
                 document.getElementById('artemis-moon-dist').textContent = allData.artemis.moonDistKm.toLocaleString() + ' km';
@@ -631,7 +552,6 @@
                 setStatus('artemis-status', 'connected', 'LIVE');
                 setStatus('source-jpl', 'connected', 'CONNECTED');
             }
-            // ISS
             if (allData.iss) {
                 document.getElementById('iss-lat').textContent = allData.iss.latitude.toFixed(1) + '°';
                 document.getElementById('iss-lon').textContent = allData.iss.longitude.toFixed(1) + '°';
@@ -639,20 +559,17 @@
                 setStatus('iss-status', 'connected', 'LIVE');
                 setStatus('source-iss', 'connected', 'CONNECTED');
             }
-            // Moon
             if (allData.moon) {
                 document.getElementById('moon-dist').textContent = allData.moon.distKm.toLocaleString() + ' km';
                 document.getElementById('moon-phase').textContent = allData.moon.phase;
                 document.getElementById('moon-illum').textContent = allData.moon.illumination + '%';
                 document.getElementById('moon-perigee').textContent = new Date(allData.moon.nextPerigee).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }
-            // Planets
             if (allData.planets?.planets) {
                 document.getElementById('planets-list').innerHTML = allData.planets.planets.map(p => 
                     `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(64,140,220,0.08);"><span style="color:${p.color}">● ${p.name}</span><span style="color:#666;font-size:10px;">${Math.floor(p.distance)}M km</span></div>`
                 ).join('');
             }
-            // Object list
             let count = 2;
             if (allData.planets?.planets) count += allData.planets.planets.length;
             document.getElementById('object-count').textContent = count + ' Active';
@@ -665,13 +582,11 @@
         }
 
         function updatePositions() {
-            // Artemis
             if (allData.artemis?.position) {
                 const s = 0.0002;
                 artemisGroup.position.set(allData.artemis.position.x * s, allData.artemis.position.y * s, allData.artemis.position.z * s);
                 artemisGroup.lookAt(0, 0, 0);
             }
-            // ISS
             if (allData.iss) {
                 const phi = (90 - allData.iss.latitude) * Math.PI / 180;
                 const theta = (allData.iss.longitude + 180) * Math.PI / 180;
@@ -679,13 +594,11 @@
                 issGroup.position.set(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
                 issGroup.lookAt(0, 0, 0);
             }
-            // Moon
             if (allData.moon) {
                 const a = allData.moon.angle;
                 const r = 60 * (1 - 0.0549 * 0.0549) / (1 + 0.0549 * Math.cos(a));
                 moonGroup.position.set(r * Math.cos(a), 0, r * Math.sin(a) * 0.9);
             }
-            // Planets
             if (allData.planets?.planets) {
                 while(planetsGroup.children.length) planetsGroup.remove(planetsGroup.children[0]);
                 allData.planets.planets.forEach(p => {
@@ -769,7 +682,32 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            handleKeyboard();
+            // Handle keyboard input
+            const speed = camera.position.distanceTo(controls.target) * 0.02;
+            const forward = new THREE.Vector3();
+            const right = new THREE.Vector3();
+            
+            if (keys['w'] || keys['arrowup']) {
+                forward.subVectors(controls.target, camera.position).normalize();
+                forward.y = 0; forward.normalize().multiplyScalar(speed);
+                controls.target.add(forward); camera.position.add(forward);
+            }
+            if (keys['s'] || keys['arrowdown']) {
+                forward.subVectors(controls.target, camera.position).normalize();
+                forward.y = 0; forward.normalize().multiplyScalar(-speed);
+                controls.target.add(forward); camera.position.add(forward);
+            }
+            if (keys['a'] || keys['arrowleft']) {
+                forward.subVectors(controls.target, camera.position).normalize();
+                right.crossVectors(forward, camera.up).normalize().multiplyScalar(-speed);
+                controls.target.add(right); camera.position.add(right);
+            }
+            if (keys['d'] || keys['arrowright']) {
+                forward.subVectors(controls.target, camera.position).normalize();
+                right.crossVectors(forward, camera.up).normalize().multiplyScalar(speed);
+                controls.target.add(right); camera.position.add(right);
+            }
+            
             earth.rotation.y += 0.0003;
             
             if (cameraMode === 'artemis') { camera.position.copy(artemisGroup.position).add(new THREE.Vector3(15, 8, 15)); controls.target.copy(artemisGroup.position); }
@@ -786,7 +724,17 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Keyboard controls initialized above
+        // Unified keyboard handler
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key >= '1' && e.key <= '6') {
+                const idx = parseInt(e.key) - 1;
+                const btn = document.querySelectorAll('.camera-btn')[idx];
+                if (btn) btn.click();
+            }
+        });
+        document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
         // Init
         addLog('═══════════════════════════════', 'info');
