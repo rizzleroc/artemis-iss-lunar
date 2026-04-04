@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBITAL COMMAND // UNIFIED SPACE TRACKING</title>
+    <title>ORBITAL COMMAND // PALANTIR STYLE</title>
     <script type="importmap">
         {
             "imports": {
@@ -13,152 +13,164 @@
         }
     </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #000; 
-            color: #e0f0ff; 
+            background: #050508; 
+            color: #e8f4f8; 
             font-family: 'Rajdhani', sans-serif;
             overflow: hidden;
-            font-size: 12px;
+            font-size: 11px;
         }
+        
+        /* Palantir Dark Aesthetic */
         .crt {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%),
-                        linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
-            background-size: 100% 4px, 4px 100%;
-            pointer-events: none; z-index: 1000; opacity: 0.4;
+            background: 
+                radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%),
+                linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.15) 50%);
+            background-size: 100% 100%, 100% 3px;
+            pointer-events: none; z-index: 1000; opacity: 0.6;
         }
+        
         .hud-panel {
-            background: rgba(5, 15, 30, 0.92);
-            border: 1px solid rgba(64, 156, 255, 0.3);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 60, 120, 0.3);
+            background: rgba(8, 12, 20, 0.92);
+            border: 1px solid rgba(64, 128, 192, 0.25);
+            backdrop-filter: blur(16px);
+            box-shadow: 
+                0 8px 32px rgba(0, 30, 60, 0.4),
+                inset 0 1px 0 rgba(255,255,255,0.05);
         }
+        
         .hud-header {
-            background: linear-gradient(90deg, rgba(0,100,200,0.4), rgba(0,60,120,0.2));
-            border-bottom: 1px solid rgba(64, 156, 255, 0.4);
+            background: linear-gradient(90deg, rgba(32, 80, 128, 0.4), rgba(16, 40, 64, 0.2));
+            border-bottom: 1px solid rgba(64, 128, 192, 0.3);
             padding: 8px 12px;
-            font-weight: 700;
+            font-weight: 600;
             letter-spacing: 2px;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
+            color: #7eb8e8;
         }
+        
         .tab-btn {
             background: transparent;
             border: none;
-            color: rgba(160, 190, 220, 0.6);
+            color: rgba(126, 160, 190, 0.6);
             padding: 8px 12px;
             cursor: pointer;
             font-family: 'Rajdhani', sans-serif;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             border-bottom: 2px solid transparent;
             transition: all 0.3s;
         }
         .tab-btn:hover, .tab-btn.active {
-            color: #fff;
-            border-bottom-color: #409cff;
+            color: #a8d8f0;
+            border-bottom-color: #4090c0;
         }
-        .metric { padding: 8px; border-bottom: 1px solid rgba(64, 156, 255, 0.1); }
+        
+        .metric { padding: 8px; border-bottom: 1px solid rgba(64, 128, 192, 0.1); }
         .metric-label { 
-            color: rgba(160, 190, 220, 0.6); 
-            font-size: 9px; 
+            color: rgba(126, 160, 190, 0.5); 
+            font-size: 8px; 
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
         .metric-value { 
-            color: #fff; 
-            font-size: 16px; 
+            color: #e8f4f8; 
+            font-size: 15px; 
             font-weight: 600;
-            font-family: monospace;
-            text-shadow: 0 0 10px rgba(100, 180, 255, 0.4);
+            font-family: 'SF Mono', monospace;
+            text-shadow: 0 0 15px rgba(100, 180, 255, 0.3);
         }
-        .artemis { color: #f472b6; }
-        .iss { color: #60a5fa; }
-        .lunar { color: #fbbf24; }
-        .planetary { color: #4ade80; }
+        .artemis { color: #f0a0c0; text-shadow: 0 0 15px rgba(240, 160, 192, 0.4); }
+        .iss { color: #60b0e0; text-shadow: 0 0 15px rgba(96, 176, 224, 0.4); }
+        .lunar { color: #e8c080; text-shadow: 0 0 15px rgba(232, 192, 128, 0.4); }
+        .planetary { color: #70d0a0; }
         
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         .ui-layer { position: relative; z-index: 100; pointer-events: none; display: flex; height: 100vh; }
         .ui-layer > * { pointer-events: auto; }
         
-        #log { height: 80px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 8px; }
-        .log-entry { margin-bottom: 2px; padding-left: 6px; border-left: 2px solid; }
+        #log { height: 100px; overflow-y: auto; font-family: 'SF Mono', monospace; font-size: 9px; padding: 10px; color: rgba(200, 220, 240, 0.7); }
+        .log-entry { margin-bottom: 3px; padding-left: 8px; border-left: 2px solid; line-height: 1.4; }
         
         .camera-controls {
-            position: absolute; bottom: 20px; left: 50%;
+            position: absolute; bottom: 25px; left: 50%;
             transform: translateX(-50%);
-            display: flex; flex-direction: column; gap: 8px;
+            display: flex; flex-direction: column; gap: 10px;
             z-index: 200; align-items: center;
-            background: rgba(0,0,0,0.8);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(64, 156, 255, 0.3);
+            background: rgba(5, 8, 12, 0.85);
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid rgba(64, 128, 192, 0.25);
         }
         .camera-btn {
-            background: rgba(5, 15, 30, 0.95);
-            border: 1px solid rgba(64, 156, 255, 0.5);
-            color: #a0c4ff; padding: 8px 16px;
+            background: rgba(8, 16, 28, 0.95);
+            border: 1px solid rgba(64, 128, 192, 0.4);
+            color: #7eb8e8; padding: 6px 14px;
             font-family: 'Rajdhani', sans-serif; font-weight: 600;
-            cursor: pointer; transition: all 0.3s;
-            text-transform: uppercase; font-size: 10px;
-            min-width: 120px;
+            cursor: pointer; transition: all 0.25s;
+            text-transform: uppercase; font-size: 9px;
+            min-width: 110px;
+            letter-spacing: 1px;
         }
         .camera-btn:hover, .camera-btn.active {
-            background: rgba(64, 156, 255, 0.3);
-            border-color: #409cff; color: #fff;
+            background: rgba(64, 128, 192, 0.25);
+            border-color: #60a0d0; color: #c0e4f8;
         }
-        .camera-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .camera-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
         
         .satellite-list { max-height: 120px; overflow-y: auto; font-size: 10px; }
         .sat-item {
             display: flex; justify-content: space-between;
-            padding: 4px 8px; border-bottom: 1px solid rgba(64, 156, 255, 0.1);
-            cursor: pointer;
+            padding: 5px 10px; border-bottom: 1px solid rgba(64, 128, 192, 0.08);
+            cursor: pointer; transition: background 0.2s;
         }
-        .sat-item:hover { background: rgba(64, 156, 255, 0.1); }
+        .sat-item:hover { background: rgba(64, 128, 192, 0.1); }
         
         .source-badge {
-            display: inline-block; padding: 2px 6px; border-radius: 3px;
-            font-size: 8px; text-transform: uppercase;
+            display: inline-block; padding: 2px 6px; border-radius: 2px;
+            font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .badge-connected { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
-        .badge-offline { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .badge-demo { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .badge-connected { background: rgba(74, 200, 120, 0.15); color: #4ac878; border: 1px solid rgba(74, 200, 120, 0.3); }
+        .badge-offline { background: rgba(220, 80, 80, 0.15); color: #dc5050; border: 1px solid rgba(220, 80, 80, 0.3); }
+        .badge-demo { background: rgba(220, 180, 80, 0.15); color: #dcb450; border: 1px solid rgba(220, 180, 80, 0.3); }
         
-        .timeline-container { padding: 8px; max-height: 150px; overflow-y: auto; }
+        .timeline-container { padding: 10px; max-height: 140px; overflow-y: auto; }
         .timeline-item {
             display: flex; align-items: flex-start;
-            padding: 4px 0; border-left: 2px solid rgba(64, 156, 255, 0.3);
-            padding-left: 8px; margin-left: 4px; position: relative;
-            font-size: 10px;
+            padding: 4px 0; border-left: 1px solid rgba(64, 128, 192, 0.2);
+            padding-left: 10px; margin-left: 4px; position: relative;
+            font-size: 9px; color: rgba(180, 200, 220, 0.6);
         }
         .timeline-item::before {
-            content: ''; position: absolute; left: -4px; top: 6px;
-            width: 6px; height: 6px; border-radius: 50%;
-            background: rgba(64, 156, 255, 0.3);
-            border: 2px solid rgba(64, 156, 255, 0.5);
+            content: ''; position: absolute; left: -3px; top: 6px;
+            width: 5px; height: 5px; border-radius: 50%;
+            background: rgba(64, 128, 192, 0.2);
+            border: 1px solid rgba(64, 128, 192, 0.4);
         }
-        .timeline-item.active::before { background: #4ade80; border-color: #4ade80; }
-        .timeline-item.completed::before { background: #409cff; border-color: #409cff; }
-        
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(64, 156, 255, 0.5); }
+        .timeline-item.active { color: #a8d8f0; }
+        .timeline-item.active::before { background: #4ac878; border-color: #4ac878; }
+        .timeline-item.completed::before { background: #4090c0; border-color: #4090c0; }
         
         .controls-hint {
-            position: absolute; bottom: 180px; left: 50%;
+            position: absolute; bottom: 200px; left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); padding: 8px 16px;
-            border-radius: 4px; font-size: 11px;
-            color: rgba(160, 190, 220, 0.8);
-            border: 1px solid rgba(64, 156, 255, 0.3);
+            background: rgba(5, 8, 12, 0.9); padding: 10px 18px;
+            border-radius: 2px; font-size: 10px;
+            color: rgba(126, 160, 190, 0.7);
+            border: 1px solid rgba(64, 128, 192, 0.2);
             pointer-events: none; z-index: 199;
+            font-family: 'SF Mono', monospace;
         }
         
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: #050508;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             z-index: 5000;
@@ -166,13 +178,22 @@
         }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loader {
-            width: 60px; height: 60px;
-            border: 3px solid rgba(64, 156, 255, 0.3);
-            border-top-color: #409cff;
+            width: 50px; height: 50px;
+            border: 2px solid rgba(64, 128, 192, 0.2);
+            border-top-color: #4090c0;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(64, 128, 192, 0.4); }
+        
+        .data-stream {
+            font-family: 'SF Mono', monospace;
+            font-size: 9px;
+            color: rgba(100, 180, 220, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -181,17 +202,17 @@
     
     <div class="loading-overlay" id="loading">
         <div class="loader"></div>
-        <div style="margin-top: 20px; color: #409cff; font-size: 14px;">INITIALIZING ORBITAL COMMAND...</div>
-        <div style="margin-top: 10px; color: #666; font-size: 11px;" id="loading-status">Connecting to data sources...</div>
+        <div style="margin-top: 24px; color: #4090c0; font-size: 12px; letter-spacing: 3px;">INITIALIZING ORBITAL COMMAND</div>
+        <div style="margin-top: 12px; color: #666; font-size: 10px;" id="loading-status">Connecting to data sources...</div>
     </div>
     
     <div class="ui-layer">
         <!-- Left Panel -->
-        <div style="width: 380px; display: flex; flex-direction: column; margin: 10px; margin-top: 60px; gap: 10px;">
+        <div style="width: 360px; display: flex; flex-direction: column; margin: 12px; margin-top: 70px; gap: 10px;">
             
             <!-- Tabs -->
             <div class="hud-panel">
-                <div style="display: flex; border-bottom: 1px solid rgba(64, 156, 255, 0.2);">
+                <div style="display: flex; border-bottom: 1px solid rgba(64, 128, 192, 0.15);">
                     <button class="tab-btn active" onclick="switchTab('mission')">Mission</button>
                     <button class="tab-btn" onclick="switchTab('system')">System</button>
                     <button class="tab-btn" onclick="switchTab('planets')">Planets</button>
@@ -199,12 +220,12 @@
                 
                 <!-- Mission Tab -->
                 <div id="tab-mission" class="tab-content">
-                    <div class="hud-header" style="background: linear-gradient(90deg, rgba(244,114,182,0.3), rgba(244,114,182,0.1));">
-                        <span class="artemis">ARTEMIS II</span>
-                        <span id="artemis-status" class="source-badge badge-demo">CONNECTING</span>
+                    <div class="hud-header" style="background: linear-gradient(90deg, rgba(240,160,192,0.2), rgba(240,160,192,0.05));">
+                        <span class="artemis">ARTEMIS II // ORION EM-2</span>
+                        <span id="artemis-status" class="source-badge badge-demo">STANDBY</span>
                     </div>
-                    <div style="padding: 10px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="padding: 12px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <div class="metric">
                                 <div class="metric-label">Earth Distance</div>
                                 <div class="metric-value artemis" id="artemis-dist">---</div>
@@ -218,19 +239,20 @@
                                 <div class="metric-value" id="artemis-vel">---</div>
                             </div>
                             <div class="metric">
-                                <div class="metric-label">Phase</div>
-                                <div class="metric-value artemis" style="font-size: 12px;" id="artemis-phase">---</div>
+                                <div class="metric-label">Mission Phase</div>
+                                <div class="metric-value artemis" style="font-size: 11px;" id="artemis-phase">---</div>
                             </div>
                         </div>
                         
-                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(64, 156, 255, 0.2);">
-                            <div style="font-size: 10px; color: rgba(160,190,220,0.6); margin-bottom: 5px;">MISSION TIMELINE</div>
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(64, 128, 192, 0.15);">
+                            <div style="font-size: 9px; color: rgba(126,160,190,0.5); margin-bottom: 6px; letter-spacing: 1px;">MISSION TIMELINE</div>
                             <div class="timeline-container">
-                                <div class="timeline-item completed"><span style="width: 50px; color: #666;">T+00:00</span><span>Launch</span></div>
-                                <div class="timeline-item completed"><span style="width: 50px; color: #666;">T+00:08</span><span>Core Stage Sep</span></div>
-                                <div class="timeline-item active" id="timeline-current"><span style="width: 50px; color: #4ade80;">NOW</span><span class="artemis" id="current-phase">Outbound Coast</span></div>
-                                <div class="timeline-item"><span style="width: 50px; color: #666;">T+3-4d</span><span>Lunar Flyby</span></div>
-                                <div class="timeline-item"><span style="width: 50px; color: #666;">T+10d</span><span>Splashdown</span></div>
+                                <div class="timeline-item completed"><span style="width: 55px; color: #666;">T+00:00</span><span>Launch</span></div>
+                                <div class="timeline-item completed"><span style="width: 55px; color: #666;">T+00:08</span><span>Core Stage Sep</span></div>
+                                <div class="timeline-item completed"><span style="width: 55px; color: #666;">T+01:30</span><span>TLI Burn</span></div>
+                                <div class="timeline-item active" id="timeline-current"><span style="width: 55px; color: #4ac878;">T+03.5d</span><span class="artemis" id="current-phase">Lunar Flyby</span></div>
+                                <div class="timeline-item"><span style="width: 55px; color: #666;">T+04-08d</span><span>Return Coast</span></div>
+                                <div class="timeline-item"><span style="width: 55px; color: #666;">T+10d</span><span>Splashdown</span></div>
                             </div>
                         </div>
                     </div>
@@ -243,18 +265,18 @@
                         <span id="object-count" class="source-badge badge-connected">0 Active</span>
                     </div>
                     <div class="satellite-list" id="satellite-list">
-                        <div style="padding: 10px; color: #666;">Loading objects...</div>
+                        <div style="padding: 12px; color: #666;">Initializing object tracking...</div>
                     </div>
                 </div>
                 
                 <!-- Planets Tab -->
                 <div id="tab-planets" class="tab-content" style="display: none;">
-                    <div class="hud-header" style="background: linear-gradient(90deg, rgba(74,222,128,0.3), rgba(74,222,128,0.1));">
-                        <span class="planetary">SOLAR SYSTEM</span>
-                        <span class="source-badge badge-connected">VSOP87</span>
+                    <div class="hud-header" style="background: linear-gradient(90deg, rgba(112,208,160,0.2), rgba(112,208,160,0.05));">
+                        <span class="planetary">SOLAR SYSTEM // VSOP87</span>
+                        <span class="source-badge badge-connected">ACTIVE</span>
                     </div>
-                    <div style="padding: 10px;" id="planets-list">
-                        <div style="padding: 10px; color: #666;">Calculating positions...</div>
+                    <div style="padding: 12px;" id="planets-list">
+                        <div style="padding: 12px; color: #666;">Calculating planetary positions...</div>
                     </div>
                 </div>
             </div>
@@ -262,29 +284,29 @@
             <!-- Data Sources -->
             <div class="hud-panel">
                 <div class="hud-header">DATA SOURCES</div>
-                <div style="padding: 10px; font-size: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>NASA JPL Horizons</span>
-                        <span id="source-jpl" class="source-badge badge-demo">Connecting...</span>
+                <div style="padding: 12px; font-size: 9px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="color: rgba(180,200,220,0.7);">NASA JPL Horizons</span>
+                        <span id="source-jpl" class="source-badge badge-demo">STANDBY</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>WhereTheISS.at</span>
-                        <span id="source-iss" class="source-badge badge-demo">Connecting...</span>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="color: rgba(180,200,220,0.7);">WhereTheISS.at</span>
+                        <span id="source-iss" class="source-badge badge-demo">STANDBY</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>NASA DSN Now</span>
-                        <span id="source-dsn" class="source-badge badge-demo">Connecting...</span>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="color: rgba(180,200,220,0.7);">NASA DSN Now</span>
+                        <span id="source-dsn" class="source-badge badge-demo">STANDBY</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
-                        <span>VSOP87 Planets</span>
-                        <span class="source-badge badge-connected">Active</span>
+                        <span style="color: rgba(180,200,220,0.7);">VSOP87 Planetary</span>
+                        <span class="source-badge badge-connected">ACTIVE</span>
                     </div>
                 </div>
             </div>
             
             <!-- Log -->
             <div class="hud-panel" style="flex: 1;">
-                <div class="hud-header" style="font-size: 10px;">SYSTEM LOG</div>
+                <div class="hud-header" style="font-size: 9px;">SYSTEM LOG // TELEMETRY</div>
                 <div id="log"></div>
             </div>
         </div>
@@ -293,27 +315,27 @@
         <div style="flex: 1;"></div>
 
         <!-- Right Panel -->
-        <div style="width: 300px; display: flex; flex-direction: column; margin: 10px; margin-top: 60px; gap: 10px;">
+        <div style="width: 300px; display: flex; flex-direction: column; margin: 12px; margin-top: 70px; gap: 10px;">
             
             <!-- ISS Panel -->
             <div class="hud-panel">
-                <div class="hud-header" style="background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(96,165,250,0.1));">
+                <div class="hud-header" style="background: linear-gradient(90deg, rgba(96,176,224,0.2), rgba(96,176,224,0.05));">
                     <span class="iss">ISS // TRACKING</span>
-                    <span id="iss-status" class="source-badge badge-demo">Connecting...</span>
+                    <span id="iss-status" class="source-badge badge-demo">STANDBY</span>
                 </div>
-                <div style="padding: 10px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: center;">
+                <div style="padding: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
                         <div>
-                            <div class="metric-label">LAT</div>
-                            <div class="metric-value iss" style="font-size: 12px;" id="iss-lat">--</div>
+                            <div class="metric-label">LATITUDE</div>
+                            <div class="metric-value iss" style="font-size: 13px;" id="iss-lat">--</div>
                         </div>
                         <div>
-                            <div class="metric-label">LON</div>
-                            <div class="metric-value iss" style="font-size: 12px;" id="iss-lon">--</div>
+                            <div class="metric-label">LONGITUDE</div>
+                            <div class="metric-value iss" style="font-size: 13px;" id="iss-lon">--</div>
                         </div>
                         <div>
-                            <div class="metric-label">ALT</div>
-                            <div class="metric-value" style="font-size: 12px;" id="iss-alt">--</div>
+                            <div class="metric-label">ALTITUDE</div>
+                            <div class="metric-value" style="font-size: 13px;" id="iss-alt">--</div>
                         </div>
                     </div>
                 </div>
@@ -321,16 +343,16 @@
             
             <!-- Moon Panel -->
             <div class="hud-panel">
-                <div class="hud-header" style="background: linear-gradient(90deg, rgba(251,191,36,0.3), rgba(251,191,36,0.1));">
+                <div class="hud-header" style="background: linear-gradient(90deg, rgba(232,192,128,0.2), rgba(232,192,128,0.05));">
                     <span class="lunar">MOON // ELP2000</span>
-                    <span class="source-badge badge-connected">Active</span>
+                    <span class="source-badge badge-connected">ACTIVE</span>
                 </div>
-                <div style="padding: 10px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                <div style="padding: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
                         <div><span style="color: #666;">Distance:</span> <span class="lunar" id="moon-dist">---</span></div>
                         <div><span style="color: #666;">Phase:</span> <span id="moon-phase">---</span></div>
-                        <div><span style="color: #666;">Illum:</span> <span id="moon-illum">--%</span></div>
-                        <div><span style="color: #666;">Perigee:</span> <span class="lunar" id="moon-perigee">---</span></div>
+                        <div><span style="color: #666;">Illumination:</span> <span id="moon-illum">--%</span></div>
+                        <div><span style="color: #666;">Next Perigee:</span> <span class="lunar" id="moon-perigee">---</span></div>
                     </div>
                 </div>
             </div>
@@ -339,26 +361,26 @@
             <div class="hud-panel">
                 <div class="hud-header">
                     <span>DEEP SPACE NETWORK</span>
-                    <span id="dsn-status" class="source-badge badge-demo">Connecting...</span>
+                    <span id="dsn-status" class="source-badge badge-demo">STANDBY</span>
                 </div>
-                <div style="padding: 10px;" id="dsn-data">
+                <div style="padding: 12px;" id="dsn-data">
                     <div style="font-size: 10px; color: #666;">Loading DSN status...</div>
                 </div>
             </div>
             
             <!-- Selected Object -->
             <div class="hud-panel" style="flex: 1;">
-                <div class="hud-header">SELECTED OBJECT</div>
-                <div style="padding: 10px;">
-                    <div class="metric-value" style="font-size: 14px; margin-bottom: 10px;" id="selected-name">None</div>
-                    <div style="font-size: 10px; color: #666;" id="selected-details">Click an object to view details</div>
+                <div class="hud-header">SELECTED OBJECT // TELEMETRY</div>
+                <div style="padding: 12px;">
+                    <div class="metric-value" style="font-size: 14px; margin-bottom: 12px;" id="selected-name">None Selected</div>
+                    <div style="font-size: 10px; color: rgba(150,170,190,0.6); line-height: 1.6;" id="selected-details">Click an object to view telemetry</div>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="controls-hint">
-        🖱️ LEFT: Rotate | RIGHT: Pan | SCROLL: Zoom | ⌨️ WASD: Pan | 1-9: Camera Views
+        [LMB] ROTATE | [RMB] PAN | [SCROLL] ZOOM | [WASD] PAN | [1-6] CAMERAS
     </div>
     
     <div class="camera-controls">
@@ -386,65 +408,85 @@
         
         // ========== SCENE SETUP ==========
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000205);
-        scene.fog = new THREE.FogExp2(0x000205, 0.00005);
+        scene.background = new THREE.Color(0x050508);
+        scene.fog = new THREE.FogExp2(0x050508, 0.00003);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100000);
-        camera.position.set(100, 50, 150);
+        camera.position.set(80, 40, 120);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+        // Post-processing for Palantir glow effect
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
-        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.35, 0.4, 0.85));
+        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.5, 0.8));
+
+        // ========== LIGHTING ==========
+        const ambientLight = new THREE.AmbientLight(0x1a2030, 0.3);
+        scene.add(ambientLight);
+
+        // Sun light (directional from right)
+        const sunLight = new THREE.DirectionalLight(0xfff4e0, 2.5);
+        sunLight.position.set(500, 100, 200);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        scene.add(sunLight);
+
+        // Rim light for dramatic effect
+        const rimLight = new THREE.DirectionalLight(0x4080c0, 0.5);
+        rimLight.position.set(-100, 50, -100);
+        scene.add(rimLight);
 
         // ========== CONTROLS ==========
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.minDistance = 5;
-        controls.maxDistance = 10000;
+        controls.minDistance = 15;
+        controls.maxDistance = 5000;
         controls.enablePan = true;
         controls.screenSpacePanning = true;
         controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
 
-        // Keyboard controls
+        // Keyboard controls (WASD panning)
         document.addEventListener('keydown', (e) => {
-            const speed = camera.position.distanceTo(controls.target) * 0.05;
+            const speed = camera.position.distanceTo(controls.target) * 0.03;
             const forward = new THREE.Vector3();
             const right = new THREE.Vector3();
             
             switch(e.key.toLowerCase()) {
                 case 'w': case 'arrowup':
                     forward.subVectors(controls.target, camera.position).normalize();
-                    forward.y = 0; // Keep horizontal
-                    forward.normalize();
-                    controls.target.addScaledVector(forward, speed);
-                    camera.position.addScaledVector(forward, speed);
+                    forward.y = 0;
+                    forward.normalize().multiplyScalar(speed);
+                    controls.target.add(forward);
+                    camera.position.add(forward);
                     break;
                 case 's': case 'arrowdown':
                     forward.subVectors(controls.target, camera.position).normalize();
                     forward.y = 0;
-                    forward.normalize();
-                    controls.target.addScaledVector(forward, -speed);
-                    camera.position.addScaledVector(forward, -speed);
+                    forward.normalize().multiplyScalar(-speed);
+                    controls.target.add(forward);
+                    camera.position.add(forward);
                     break;
                 case 'a': case 'arrowleft':
                     forward.subVectors(controls.target, camera.position).normalize();
-                    right.crossVectors(forward, camera.up).normalize();
-                    controls.target.addScaledVector(right, -speed);
-                    camera.position.addScaledVector(right, -speed);
+                    right.crossVectors(forward, camera.up).normalize().multiplyScalar(-speed);
+                    controls.target.add(right);
+                    camera.position.add(right);
                     break;
                 case 'd': case 'arrowright':
                     forward.subVectors(controls.target, camera.position).normalize();
-                    right.crossVectors(forward, camera.up).normalize();
-                    controls.target.addScaledVector(right, speed);
-                    camera.position.addScaledVector(right, speed);
+                    right.crossVectors(forward, camera.up).normalize().multiplyScalar(speed);
+                    controls.target.add(right);
+                    camera.position.add(right);
                     break;
                 case '1': setCamera('artemis'); break;
                 case '2': setCamera('iss'); break;
@@ -456,94 +498,259 @@
             controls.update();
         });
 
-        // ========== CELESTIAL BODIES ==========
+        // ========== TEXTURE LOADING ==========
         const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = 'anonymous';
         
-        // Earth
+        // Use reliable CDN textures
+        const textures = {
+            earth: 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+            earthBump: 'https://unpkg.com/three-globe/example/img/earth-topology.png',
+            moon: 'https://unpkg.com/three-globe/example/img/moon.jpg',
+            starfield: null
+        };
+
+        // ========== CELESTIAL BODIES ==========
+        
+        // Earth Group
         const earthGroup = new THREE.Group();
         scene.add(earthGroup);
         
-        const earth = new THREE.Mesh(
-            new THREE.SphereGeometry(10, 128, 128),
-            new THREE.MeshStandardMaterial({
-                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg'),
-                normalMap: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg'),
-                metalness: 0.1, roughness: 0.8
-            })
+        // Earth with fallback material
+        const earthGeometry = new THREE.SphereGeometry(10, 128, 128);
+        let earthMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2244aa,
+            metalness: 0.1,
+            roughness: 0.7,
+            emissive: 0x051030,
+            emissiveIntensity: 0.2
+        });
+        
+        // Try to load texture
+        textureLoader.load(textures.earth, 
+            (tex) => {
+                earthMaterial.map = tex;
+                earthMaterial.color.setHex(0xffffff);
+                earthMaterial.needsUpdate = true;
+                addLog('Earth texture loaded', 'connected');
+            },
+            undefined,
+            (err) => addLog('Earth texture failed, using fallback', 'error')
         );
+        
+        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        earth.castShadow = true;
+        earth.receiveShadow = true;
         earthGroup.add(earth);
         
-        earthGroup.add(new THREE.Mesh(
-            new THREE.SphereGeometry(10.3, 64, 64),
-            new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.1, side: THREE.BackSide, blending: THREE.AdditiveBlending })
-        ));
+        // Atmosphere glow
+        const atmosphere = new THREE.Mesh(
+            new THREE.SphereGeometry(10.5, 64, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0x4488ff,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.BackSide,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        earthGroup.add(atmosphere);
+        
+        // City lights on night side
+        const cityLights = new THREE.Mesh(
+            new THREE.SphereGeometry(10.05, 64, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0xffaa44,
+                transparent: true,
+                opacity: 0.3,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        cityLights.visible = false; // Only show on night side in shader
+        earthGroup.add(cityLights);
 
         // Moon
         const moonGroup = new THREE.Group();
         scene.add(moonGroup);
         
-        const moon = new THREE.Mesh(
-            new THREE.SphereGeometry(2.7, 64, 64),
-            new THREE.MeshStandardMaterial({
-                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg'),
-                color: 0xdddddd, metalness: 0.0, roughness: 0.9
-            })
+        let moonMaterial = new THREE.MeshStandardMaterial({
+            color: 0x888888,
+            metalness: 0.0,
+            roughness: 0.95,
+            emissive: 0x111111,
+            emissiveIntensity: 0.1
+        });
+        
+        textureLoader.load(textures.moon,
+            (tex) => {
+                moonMaterial.map = tex;
+                moonMaterial.color.setHex(0xdddddd);
+                moonMaterial.needsUpdate = true;
+                addLog('Moon texture loaded', 'connected');
+            },
+            undefined,
+            (err) => addLog('Moon texture failed, using fallback', 'error')
         );
+        
+        const moon = new THREE.Mesh(new THREE.SphereGeometry(2.7, 64, 64), moonMaterial);
+        moon.castShadow = true;
+        moon.receiveShadow = true;
         moonGroup.add(moon);
 
-        // Sun
+        // Sun visual (distant light source)
         const sunGroup = new THREE.Group();
-        sunGroup.position.set(1000, 0, 0);
+        sunGroup.position.set(2000, 500, 1000);
         scene.add(sunGroup);
         
         const sun = new THREE.Mesh(
-            new THREE.SphereGeometry(50, 64, 64),
-            new THREE.MeshBasicMaterial({ color: 0xffffaa })
+            new THREE.SphereGeometry(100, 32, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffffee })
         );
         sunGroup.add(sun);
-        sunGroup.add(new THREE.PointLight(0xffffff, 2, 5000));
 
         // Planets container
         const planetsGroup = new THREE.Group();
         scene.add(planetsGroup);
 
-        // ========== SPACECRAFT ==========
+        // ========== SPACECRAFT MODELS ==========
+        
+        // Artemis II Orion
         const artemisGroup = new THREE.Group();
         scene.add(artemisGroup);
         
-        // Artemis model
-        const whiteMetal = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 0.7, roughness: 0.3 });
-        const goldFoil = new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.9, roughness: 0.2 });
-        const solarPanel = new THREE.MeshStandardMaterial({ color: 0x1a237e, metalness: 0.5, roughness: 0.3, emissive: 0x0a0a3e, emissiveIntensity: 0.2 });
+        const whiteMetal = new THREE.MeshStandardMaterial({ 
+            color: 0xe8e8e8, 
+            metalness: 0.8, 
+            roughness: 0.2 
+        });
+        const goldFoil = new THREE.MeshStandardMaterial({ 
+            color: 0xd4a84a, 
+            metalness: 0.9, 
+            roughness: 0.2 
+        });
+        const blueSolar = new THREE.MeshStandardMaterial({ 
+            color: 0x1a3a6a, 
+            metalness: 0.4, 
+            roughness: 0.3,
+            emissive: 0x0a1a3a,
+            emissiveIntensity: 0.3
+        });
         
-        artemisGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.65), whiteMetal).rotateX(Math.PI).translateY(0.4));
-        artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), whiteMetal).translateY(-0.4));
+        // Crew module (cone)
+        const crewModule = new THREE.Mesh(
+            new THREE.ConeGeometry(0.35, 0.7, 32),
+            whiteMetal
+        );
+        crewModule.position.y = 0.4;
+        artemisGroup.add(crewModule);
         
+        // Service module (cylinder)
+        const serviceModule = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32),
+            whiteMetal
+        );
+        serviceModule.position.y = -0.4;
+        artemisGroup.add(serviceModule);
+        
+        // Solar panels (4x array)
         [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([x, z]) => {
-            const panel = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.02, 0.4), solarPanel);
-            panel.position.set(x * 1.0, -0.3, z * 1.0);
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.02, 0.5), blueSolar);
+            panel.position.set(x * 1.2, -0.3, z * 1.2);
             artemisGroup.add(panel);
         });
         
-        artemisGroup.scale.set(0.4, 0.4, 0.4);
+        // Engine nozzle
+        const engine = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.15, 0.25, 0.3, 16),
+            new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5, roughness: 0.8 })
+        );
+        engine.position.y = -1.0;
+        artemisGroup.add(engine);
+        
+        // Engine glow
+        const engineGlow = new THREE.PointLight(0x4488ff, 1, 10);
+        engineGlow.position.y = -1.2;
+        artemisGroup.add(engineGlow);
+        
+        artemisGroup.scale.set(0.5, 0.5, 0.5);
 
         // ISS
         const issGroup = new THREE.Group();
         scene.add(issGroup);
-        issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.3), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })));
-        issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.03, 0.8), solarPanel));
+        
+        // Main truss
+        const truss = new THREE.Mesh(
+            new THREE.BoxGeometry(4, 0.2, 0.4),
+            new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.3 })
+        );
+        issGroup.add(truss);
+        
+        // Modules
+        const module1 = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16),
+            whiteMetal
+        );
+        module1.rotation.z = Math.PI / 2;
+        issGroup.add(module1);
+        
+        // Solar arrays
+        const solarPanel1 = new THREE.Mesh(
+            new THREE.BoxGeometry(3, 0.05, 1),
+            blueSolar
+        );
+        solarPanel1.position.set(0, 0.5, 1.5);
+        issGroup.add(solarPanel1);
+        
+        const solarPanel2 = new THREE.Mesh(
+            new THREE.BoxGeometry(3, 0.05, 1),
+            blueSolar
+        );
+        solarPanel2.position.set(0, 0.5, -1.5);
+        issGroup.add(solarPanel2);
+        
+        // ISS always faces Earth
+        issGroup.lookAt(0, 0, 0);
 
-        // ========== STARS ==========
-        scene.add(new THREE.Points(
-            new THREE.BufferGeometry().setFromPoints(
-                Array.from({length: 8000}, () => new THREE.Vector3(
-                    (Math.random() - 0.5) * 5000,
-                    (Math.random() - 0.5) * 5000,
-                    (Math.random() - 0.5) * 5000
-                ))
-            ),
-            new THREE.PointsMaterial({ color: 0xaaccff, size: 1.2, transparent: true, opacity: 0.7 })
-        ));
+        // ========== STARFIELD ==========
+        const starsGeometry = new THREE.BufferGeometry();
+        const starPositions = [];
+        const starColors = [];
+        
+        for (let i = 0; i < 15000; i++) {
+            const r = 8000 + Math.random() * 4000;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            
+            starPositions.push(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta),
+                r * Math.cos(phi)
+            );
+            
+            // Slight color variation
+            const t = Math.random();
+            if (t < 0.8) {
+                starColors.push(0.9, 0.95, 1.0); // Blue-white
+            } else if (t < 0.95) {
+                starColors.push(1.0, 0.9, 0.8); // Yellow-white
+            } else {
+                starColors.push(1.0, 0.7, 0.6); // Reddish
+            }
+        }
+        
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+        starsGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
+        
+        const starsMaterial = new THREE.PointsMaterial({
+            size: 1.5,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            sizeAttenuation: false
+        });
+        
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
 
         // ========== DATA MANAGEMENT ==========
         const logEl = document.getElementById('log');
@@ -551,17 +758,30 @@
             const time = new Date().toISOString().split('T')[1].split('.')[0];
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            entry.style.borderColor = type === 'artemis' ? '#f472b6' : type === 'iss' ? '#60a5fa' : type === 'planetary' ? '#4ade80' : type === 'connected' ? '#4ade80' : type === 'error' ? '#ef4444' : '#409cff';
-            entry.innerHTML = `<span style="color:#666">[${time}]</span> ${msg}`;
+            const colors = {
+                artemis: '#f0a0c0',
+                iss: '#60b0e0',
+                planetary: '#70d0a0',
+                connected: '#4ac878',
+                error: '#dc5050',
+                info: '#4090c0'
+            };
+            entry.style.borderColor = colors[type] || colors.info;
+            entry.innerHTML = `<span style="color:#556">[${time}]</span> ${msg}`;
             logEl.appendChild(entry);
             logEl.scrollTop = logEl.scrollHeight;
-            if (logEl.children.length > 20) logEl.removeChild(logEl.firstChild);
+            if (logEl.children.length > 25) logEl.removeChild(logEl.firstChild);
         }
 
         function setStatus(id, status, text) {
             const el = document.getElementById(id);
             if (!el) return;
-            el.className = 'source-badge ' + (status === 'connected' ? 'badge-connected' : status === 'demo' ? 'badge-demo' : 'badge-offline');
+            const classes = {
+                connected: 'badge-connected',
+                demo: 'badge-demo',
+                offline: 'badge-offline'
+            };
+            el.className = 'source-badge ' + (classes[status] || classes.demo);
             el.textContent = text || status.toUpperCase();
         }
 
@@ -573,23 +793,23 @@
         async function fetchAllData() {
             try {
                 document.getElementById('loading-status').textContent = 'Fetching orbital data...';
+                addLog('Requesting telemetry from unified API...', 'info');
                 
                 const response = await fetch(`${API_BASE}?endpoint=all`);
-                if (!response.ok) throw new Error('API Error');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 allData = await response.json();
                 
                 updateUIFromData();
                 update3DPositions();
                 
-                addLog(`DATA LINK ESTABLISHED - Artemis: ${allData.artemis.phase}, ISS: ${Math.floor(allData.iss.altitude)}km`, 'connected');
+                addLog(`Telemetry received: Artemis ${allData.artemis.phase}, ISS @ ${Math.floor(allData.iss.altitude)}km`, 'connected');
                 
                 document.getElementById('loading').classList.add('hidden');
                 
             } catch(e) {
-                addLog(`API Error: ${e.message}`, 'error');
-                document.getElementById('loading-status').textContent = 'Using demo mode...';
-                setTimeout(() => document.getElementById('loading').classList.add('hidden'), 1000);
+                addLog(`Data link failed: ${e.message}`, 'error');
+                document.getElementById('loading-status').textContent = 'Connection failed - retrying...';
             }
         }
 
@@ -603,9 +823,6 @@
                 document.getElementById('current-phase').textContent = allData.artemis.phase;
                 setStatus('artemis-status', 'connected', 'LIVE');
                 setStatus('source-jpl', 'connected', 'CONNECTED');
-            } else {
-                setStatus('artemis-status', 'demo', 'DEMO');
-                setStatus('source-jpl', 'demo', 'DEMO');
             }
             
             // ISS
@@ -615,9 +832,6 @@
                 document.getElementById('iss-alt').textContent = Math.floor(allData.iss.altitude) + ' km';
                 setStatus('iss-status', 'connected', 'LIVE');
                 setStatus('source-iss', 'connected', 'CONNECTED');
-            } else {
-                setStatus('iss-status', 'demo', 'DEMO');
-                setStatus('source-iss', 'demo', 'DEMO');
             }
             
             // Moon
@@ -630,77 +844,58 @@
             }
             
             // DSN
-            if (allData.dsn && !allData.dsn.error) {
+            if (allData.dsn) {
                 const dsnEl = document.getElementById('dsn-data');
                 let html = '';
                 Object.entries(allData.dsn.stations).forEach(([name, status]) => {
-                    const color = status.online ? '#4ade80' : '#fbbf24';
-                    html += `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span>${name}</span><span style="color:${color}">${status.status}</span></div>`;
+                    const color = status.online ? '#4ac878' : '#dcb450';
+                    html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:10px;"><span style="text-transform:uppercase;">${name}</span><span style="color:${color}">${status.status}</span></div>`;
                 });
-                if (allData.dsn.spacecraft && allData.dsn.spacecraft.length > 0) {
-                    html += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(64,156,255,0.2);"><span style="color:#666;">Active:</span> ${allData.dsn.spacecraft.join(', ')}</div>`;
+                if (allData.dsn.spacecraft?.length > 0) {
+                    html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(64,128,192,0.15);font-size:9px;color:#888;"><span style="color:#666;">TRACKING:</span> ${allData.dsn.spacecraft.join(', ')}</div>`;
                 }
                 dsnEl.innerHTML = html;
-                setStatus('dsn-status', 'connected', 'ACTIVE');
-                setStatus('source-dsn', 'connected', 'CONNECTED');
-            } else {
-                setStatus('dsn-status', 'offline', 'OFFLINE');
-                setStatus('source-dsn', 'offline', 'OFFLINE');
+                setStatus('dsn-status', allData.dsn.stations.goldstone?.online ? 'connected' : 'demo', allData.dsn.stations.goldstone?.online ? 'ACTIVE' : 'STANDBY');
+                setStatus('source-dsn', allData.dsn.stations.goldstone?.online ? 'connected' : 'demo', allData.dsn.stations.goldstone?.online ? 'CONNECTED' : 'STANDBY');
             }
             
             // Planets
-            if (allData.planets && allData.planets.planets) {
+            if (allData.planets?.planets) {
                 const planetsEl = document.getElementById('planets-list');
                 planetsEl.innerHTML = allData.planets.planets.map(p => `
-                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(64,156,255,0.1);">
+                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(64,128,192,0.08);">
                         <span style="color:${p.color}">● ${p.name}</span>
-                        <span style="color:#666;">${Math.floor(p.distance)}M km</span>
+                        <span style="color:#666;font-family:monospace;font-size:10px;">${Math.floor(p.distance)}M km</span>
                     </div>
                 `).join('');
             }
             
-            // Object count
-            let count = 2; // Artemis + ISS
-            if (allData.planets) count += allData.planets.planets.length;
+            // Object count and list
+            let count = 2;
+            if (allData.planets?.planets) count += allData.planets.planets.length;
             document.getElementById('object-count').textContent = count + ' Active';
             
-            // Populate satellite list
             const listEl = document.getElementById('satellite-list');
             listEl.innerHTML = `
-                <div class="sat-item" onclick="selectObject('artemis')">
-                    <span style="color:#f472b6;">● Artemis II</span>
-                    <span style="color:#666;">NASA</span>
-                </div>
-                <div class="sat-item" onclick="selectObject('iss')">
-                    <span style="color:#60a5fa;">● ISS</span>
-                    <span style="color:#666;">Station</span>
-                </div>
-                <div class="sat-item" onclick="selectObject('moon')">
-                    <span style="color:#fbbf24;">● Moon</span>
-                    <span style="color:#666;">Natural</span>
-                </div>
+                <div class="sat-item" onclick="selectObject('artemis')"><span style="color:#f0a0c0;">● Artemis II</span><span style="color:#666;">NASA</span></div>
+                <div class="sat-item" onclick="selectObject('iss')"><span style="color:#60b0e0;">● ISS</span><span style="color:#666;">Station</span></div>
+                <div class="sat-item" onclick="selectObject('moon')"><span style="color:#e8c080;">● Moon</span><span style="color:#666;">Natural</span></div>
             `;
-            if (allData.planets && allData.planets.planets) {
-                allData.planets.planets.forEach(p => {
-                    listEl.innerHTML += `
-                        <div class="sat-item" onclick="selectObject('${p.name.toLowerCase()}')">
-                            <span style="color:${p.color};">● ${p.name}</span>
-                            <span style="color:#666;">Planet</span>
-                        </div>
-                    `;
-                });
-            }
+            allData.planets?.planets?.forEach(p => {
+                listEl.innerHTML += `<div class="sat-item" onclick="selectObject('${p.name.toLowerCase()}')"><span style="color:${p.color};">● ${p.name}</span><span style="color:#666;">Planet</span></div>`;
+            });
         }
 
         function update3DPositions() {
             // Artemis
-            if (allData.artemis && allData.artemis.position) {
-                const scale = 0.01;
+            if (allData.artemis?.position) {
+                const scale = 0.0002; // Scale down from km to scene units
                 artemisGroup.position.set(
                     allData.artemis.position.x * scale,
                     allData.artemis.position.y * scale,
                     allData.artemis.position.z * scale
                 );
+                // Point heat shield toward Earth (retrograde)
                 artemisGroup.lookAt(0, 0, 0);
             }
             
@@ -714,6 +909,7 @@
                     r * Math.cos(phi),
                     r * Math.sin(phi) * Math.sin(theta)
                 );
+                issGroup.lookAt(0, 0, 0);
             }
             
             // Moon
@@ -724,14 +920,18 @@
             }
             
             // Planets
-            if (allData.planets && allData.planets.planets) {
-                // Clear old planets
+            if (allData.planets?.planets) {
                 while(planetsGroup.children.length > 0) planetsGroup.remove(planetsGroup.children[0]);
                 
                 allData.planets.planets.forEach(p => {
+                    const size = p.name === 'Jupiter' ? 6 : p.name === 'Saturn' ? 5 : 3;
                     const planet = new THREE.Mesh(
-                        new THREE.SphereGeometry(p.name === 'Jupiter' ? 5 : p.name === 'Saturn' ? 4 : 2, 32, 32),
-                        new THREE.MeshStandardMaterial({ color: p.color, metalness: 0.3, roughness: 0.7 })
+                        new THREE.SphereGeometry(size, 32, 32),
+                        new THREE.MeshStandardMaterial({ 
+                            color: p.color, 
+                            metalness: 0.2, 
+                            roughness: 0.8 
+                        })
                     );
                     planet.position.set(p.x, p.y, p.z);
                     planet.userData = { name: p.name, type: 'Planet' };
@@ -740,8 +940,13 @@
                     // Saturn rings
                     if (p.name === 'Saturn') {
                         const ring = new THREE.Mesh(
-                            new THREE.RingGeometry(5, 8, 64),
-                            new THREE.MeshBasicMaterial({ color: 0xc4a574, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+                            new THREE.RingGeometry(7, 11, 64),
+                            new THREE.MeshBasicMaterial({ 
+                                color: 0xc4a574, 
+                                transparent: true, 
+                                opacity: 0.5, 
+                                side: THREE.DoubleSide 
+                            })
                         );
                         ring.rotation.x = Math.PI / 2;
                         planet.add(ring);
@@ -756,43 +961,43 @@
             event.target.classList.add('active');
             cameraMode = mode;
             
-            const duration = 1000;
+            const duration = 800;
             const startPos = camera.position.clone();
             const startTarget = controls.target.clone();
             let endPos, endTarget;
             
             switch(mode) {
                 case 'earth':
-                    endPos = new THREE.Vector3(30, 20, 50);
+                    endPos = new THREE.Vector3(40, 25, 60);
                     endTarget = new THREE.Vector3(0, 0, 0);
                     break;
                 case 'moon':
-                    endPos = new THREE.Vector3(moonGroup.position.x + 20, 10, moonGroup.position.z + 20);
+                    endPos = new THREE.Vector3(moonGroup.position.x + 25, 15, moonGroup.position.z + 25);
                     endTarget = moonGroup.position.clone();
                     break;
                 case 'artemis':
-                    endPos = artemisGroup.position.clone().add(new THREE.Vector3(10, 5, 10));
+                    endPos = artemisGroup.position.clone().add(new THREE.Vector3(15, 8, 15));
                     endTarget = artemisGroup.position.clone();
                     break;
                 case 'iss':
-                    endPos = issGroup.position.clone().add(new THREE.Vector3(5, 2, 5));
+                    endPos = issGroup.position.clone().add(new THREE.Vector3(8, 4, 8));
                     endTarget = issGroup.position.clone();
                     break;
                 case 'system':
-                    endPos = new THREE.Vector3(200, 100, 200);
-                    endTarget = new THREE.Vector3(50, 0, 0);
+                    endPos = new THREE.Vector3(250, 120, 250);
+                    endTarget = new THREE.Vector3(80, 0, 0);
                     break;
                 case 'mars':
                     const mars = allData.planets?.planets?.find(p => p.name === 'Mars');
                     if (mars) {
-                        endPos = new THREE.Vector3(mars.x + 50, 20, mars.z + 50);
+                        endPos = new THREE.Vector3(mars.x + 80, 30, mars.z + 80);
                         endTarget = new THREE.Vector3(mars.x, 0, mars.z);
                     }
                     break;
                 case 'jupiter':
                     const jupiter = allData.planets?.planets?.find(p => p.name === 'Jupiter');
                     if (jupiter) {
-                        endPos = new THREE.Vector3(jupiter.x + 100, 50, jupiter.z + 100);
+                        endPos = new THREE.Vector3(jupiter.x + 150, 60, jupiter.z + 150);
                         endTarget = new THREE.Vector3(jupiter.x, 0, jupiter.z);
                     }
                     break;
@@ -802,7 +1007,6 @@
             }
             
             if (endPos && endTarget) {
-                // Smooth transition
                 const startTime = Date.now();
                 function animateCamera() {
                     const elapsed = Date.now() - startTime;
@@ -811,6 +1015,7 @@
                     
                     camera.position.lerpVectors(startPos, endPos, ease);
                     controls.target.lerpVectors(startTarget, endTarget, ease);
+                    controls.update();
                     
                     if (t < 1) requestAnimationFrame(animateCamera);
                 }
@@ -826,36 +1031,35 @@
             switch(name) {
                 case 'artemis':
                     nameEl.textContent = 'Artemis II Orion';
-                    nameEl.style.color = '#f472b6';
+                    nameEl.style.color = '#f0a0c0';
                     detailsEl.innerHTML = allData.artemis ? `
-                        Distance: ${allData.artemis.distKm.toLocaleString()} km<br>
-                        Velocity: ${allData.artemis.velMs.toLocaleString()} m/s<br>
-                        Phase: ${allData.artemis.phase}<br>
-                        Source: ${allData.artemis.source}
-                    ` : 'No data available';
-                    setCamera('artemis');
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Earth Distance:</span> ${allData.artemis.distKm.toLocaleString()} km</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Moon Distance:</span> ${allData.artemis.moonDistKm.toLocaleString()} km</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Velocity:</span> ${allData.artemis.velMs.toLocaleString()} m/s</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Phase:</span> ${allData.artemis.phase}</div>
+                        <div><span style="color:#666;">Source:</span> ${allData.artemis.source}</div>
+                    ` : 'No telemetry available';
                     break;
                 case 'iss':
                     nameEl.textContent = 'International Space Station';
-                    nameEl.style.color = '#60a5fa';
+                    nameEl.style.color = '#60b0e0';
                     detailsEl.innerHTML = allData.iss ? `
-                        Latitude: ${allData.iss.latitude.toFixed(2)}°<br>
-                        Longitude: ${allData.iss.longitude.toFixed(2)}°<br>
-                        Altitude: ${allData.iss.altitude.toFixed(1)} km<br>
-                        Velocity: ${allData.iss.velocity.toFixed(0)} km/h
-                    ` : 'No data available';
-                    setCamera('iss');
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Latitude:</span> ${allData.iss.latitude.toFixed(3)}°</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Longitude:</span> ${allData.iss.longitude.toFixed(3)}°</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Altitude:</span> ${allData.iss.altitude.toFixed(1)} km</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Velocity:</span> ${allData.iss.velocity.toFixed(0)} km/h</div>
+                        <div><span style="color:#666;">Visibility:</span> ${allData.iss.visibility}</div>
+                    ` : 'No telemetry available';
                     break;
                 case 'moon':
                     nameEl.textContent = 'Moon';
-                    nameEl.style.color = '#fbbf24';
+                    nameEl.style.color = '#e8c080';
                     detailsEl.innerHTML = allData.moon ? `
-                        Distance: ${allData.moon.distKm.toLocaleString()} km<br>
-                        Phase: ${allData.moon.phase}<br>
-                        Illumination: ${allData.moon.illumination}%<br>
-                        Source: ${allData.moon.source}
-                    ` : 'No data available';
-                    setCamera('moon');
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Distance:</span> ${allData.moon.distKm.toLocaleString()} km</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Phase:</span> ${allData.moon.phase}</div>
+                        <div style="margin-bottom:4px;"><span style="color:#666;">Illumination:</span> ${allData.moon.illumination}%</div>
+                        <div><span style="color:#666;">Source:</span> ${allData.moon.source}</div>
+                    ` : 'No telemetry available';
                     break;
                 default:
                     const planet = allData.planets?.planets?.find(p => p.name.toLowerCase() === name);
@@ -863,11 +1067,10 @@
                         nameEl.textContent = planet.name;
                         nameEl.style.color = planet.color;
                         detailsEl.innerHTML = `
-                            Distance from Sun: ${planet.distance} million km<br>
-                            Orbital Period: ${planet.period} days<br>
-                            Position: X=${planet.x.toFixed(0)}, Z=${planet.z.toFixed(0)}
+                            <div style="margin-bottom:4px;"><span style="color:#666;">Distance from Sun:</span> ${planet.distance} million km</div>
+                            <div style="margin-bottom:4px;"><span style="color:#666;">Orbital Period:</span> ${planet.period.toLocaleString()} days</div>
+                            <div><span style="color:#666;">Position:</span> X=${planet.x.toFixed(0)}, Z=${planet.z.toFixed(0)}</div>
                         `;
-                        setCamera(name);
                     }
             }
         };
@@ -883,15 +1086,21 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            earth.rotation.y += 0.0005;
+            // Rotate Earth slowly
+            earth.rotation.y += 0.0003;
+            
+            // Rotate ISS solar panels
+            issGroup.children.forEach((child, i) => {
+                if (i > 0) child.rotation.x += 0.001;
+            });
             
             // Camera follow modes
-            if (cameraMode === 'artemis' && artemisGroup) {
-                const offset = new THREE.Vector3(10, 5, 10);
+            if (cameraMode === 'artemis') {
+                const offset = new THREE.Vector3(15, 8, 15);
                 camera.position.copy(artemisGroup.position).add(offset);
                 controls.target.copy(artemisGroup.position);
-            } else if (cameraMode === 'iss' && issGroup) {
-                const offset = new THREE.Vector3(5, 2, 5);
+            } else if (cameraMode === 'iss') {
+                const offset = new THREE.Vector3(8, 4, 8);
                 camera.position.copy(issGroup.position).add(offset);
                 controls.target.copy(issGroup.position);
             }
@@ -908,15 +1117,15 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        addLog('══════════════════════════════════', 'info');
+        addLog('══════════════════════════════════════', 'info');
         addLog('ORBITAL COMMAND SYSTEM ONLINE', 'info');
-        addLog('══════════════════════════════════', 'info');
-        addLog('Initializing data connections...', 'info');
+        addLog('══════════════════════════════════════', 'info');
+        addLog('Rendering engine initialized', 'info');
+        addLog('Establishing data connections...', 'info');
 
-        // Start data fetching
+        // Start
         fetchAllData();
         setInterval(fetchAllData, 30000);
-
         animate();
     </script>
 </body>
