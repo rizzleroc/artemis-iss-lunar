@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ORBITAL COMMAND // ARTEMIS II MISSION CONTROL</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
     <script type="importmap">
         {
             "imports": {
@@ -468,7 +469,7 @@
         scene.add(earthGroup);
         
         const earthMat = new THREE.MeshStandardMaterial({ color: 0x2244aa, metalness: 0.1, roughness: 0.7 });
-        textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+        textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
             (tex) => { earthMat.map = tex; earthMat.color.setHex(0xffffff); addLog('Earth texture loaded', 'info'); },
             undefined,
             () => addLog('Earth texture failed', 'error')
@@ -488,7 +489,7 @@
         scene.add(moonGroup);
         
         const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0, roughness: 0.9 });
-        textureLoader.load('https://unpkg.com/three-globe/example/img/moon.jpg',
+        textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg',
             (tex) => { moonMat.map = tex; moonMat.color.setHex(0xdddddd); addLog('Moon texture loaded', 'info'); },
             undefined,
             () => addLog('Moon texture failed', 'error')
@@ -512,7 +513,9 @@
         artemisGroup.add(new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 32), whiteMetal).translateY(0.4));
         artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), whiteMetal).translateY(-0.4));
         [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([x, z]) => {
-            artemisGroup.add(new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.02, 0.5), blueSolar).position.set(x * 1.2, -0.3, z * 1.2));
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.02, 0.5), blueSolar);
+            panel.position.set(x * 1.2, -0.3, z * 1.2);
+            artemisGroup.add(panel);
         });
         artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x333333 })).translateY(-1.0));
         artemisGroup.scale.set(0.5, 0.5, 0.5);
@@ -521,9 +524,15 @@
         const issGroup = new THREE.Group();
         scene.add(issGroup);
         issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })));
-        issGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), whiteMetal).rotation.z = Math.PI / 2);
-        issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar).position.set(0, 0.5, 1.5));
-        issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar).position.set(0, 0.5, -1.5));
+        const module1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), whiteMetal);
+        module1.rotation.z = Math.PI / 2;
+        issGroup.add(module1);
+        const solar1 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
+        solar1.position.set(0, 0.5, 1.5);
+        issGroup.add(solar1);
+        const solar2 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
+        solar2.position.set(0, 0.5, -1.5);
+        issGroup.add(solar2);
 
         // Stars
         const starsGeo = new THREE.BufferGeometry();
