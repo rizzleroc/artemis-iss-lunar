@@ -551,7 +551,7 @@
             const time = new Date().toISOString().split('T')[1].split('.')[0];
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            entry.style.borderColor = type === 'artemis' ? '#f472b6' : type === 'iss' ? '#60a5fa' : type === 'planetary' ? '#4ade80' : '#409cff';
+            entry.style.borderColor = type === 'artemis' ? '#f472b6' : type === 'iss' ? '#60a5fa' : type === 'planetary' ? '#4ade80' : type === 'connected' ? '#4ade80' : type === 'error' ? '#ef4444' : '#409cff';
             entry.innerHTML = `<span style="color:#666">[${time}]</span> ${msg}`;
             logEl.appendChild(entry);
             logEl.scrollTop = logEl.scrollHeight;
@@ -581,6 +581,8 @@
                 
                 updateUIFromData();
                 update3DPositions();
+                
+                addLog(`DATA LINK ESTABLISHED - Artemis: ${allData.artemis.phase}, ISS: ${Math.floor(allData.iss.altitude)}km`, 'connected');
                 
                 document.getElementById('loading').classList.add('hidden');
                 
