@@ -186,7 +186,7 @@
             <div class="hud-panel flex flex-col" style="flex: 1.2;">
                 <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(244,114,182,0.3), rgba(244,114,182,0.1)); border-color: rgba(244,114,182,0.4);">
                     <span class="artemis">ARTEMIS II // ORION</span>
-                    <span class="live text-xs px-2 py-1 rounded" style="background: rgba(244,114,182,0.2)">● LIVE</span>
+                    <span id="artemis-status" class="text-xs px-2 py-1 rounded" style="background: rgba(0,0,0,0.3)">● CONNECTING...</span>
                 </div>
                 <div class="p-3">
                     <div class="flex justify-between mb-2">
@@ -285,7 +285,7 @@
             <div class="hud-panel flex flex-col" style="flex: 1;">
                 <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(96,165,250,0.1)); border-color: rgba(96,165,250,0.4);">
                     <span class="iss">ISS // TRACKING</span>
-                    <span class="live text-xs px-2 py-1 rounded" style="background: rgba(96,165,250,0.2)">● LIVE</span>
+                    <span id="iss-status" class="text-xs px-2 py-1 rounded" style="background: rgba(0,0,0,0.3)">● CONNECTING...</span>
                 </div>
                 <div class="p-3">
                     <div class="flex justify-between mb-2">
@@ -325,7 +325,7 @@
     </div>
     
     <div class="camera-hint">
-        🖱️ LEFT CLICK: Rotate | RIGHT CLICK: Pan | SCROLL: Zoom | DOUBLE CLICK: Reset
+        🖱️ LEFT: Rotate | RIGHT: Pan | SCROLL: Zoom | ⌨️ WASD/ARROWS: Pan | DOUBLE CLICK: Reset
     </div>
 
     <script type="module">
@@ -362,11 +362,32 @@
         controls.minDistance = 5;
         controls.maxDistance = 2000;
         controls.enablePan = true;
+        controls.panSpeed = 1.0;
+        controls.screenSpacePanning = true;
         controls.mouseButtons = {
             LEFT: THREE.MOUSE.ROTATE,
             MIDDLE: THREE.MOUSE.DOLLY,
             RIGHT: THREE.MOUSE.PAN
         };
+        controls.touches = {
+            ONE: THREE.TOUCH.ROTATE,
+            TWO: THREE.TOUCH.DOLLY_PAN
+        };
+        
+        // Keyboard controls for panning
+        document.addEventListener('keydown', (e) => {
+            const panSpeed = 2;
+            switch(e.key) {
+                case 'ArrowUp': controls.pan(0, panSpeed); break;
+                case 'ArrowDown': controls.pan(0, -panSpeed); break;
+                case 'ArrowLeft': controls.pan(panSpeed, 0); break;
+                case 'ArrowRight': controls.pan(-panSpeed, 0); break;
+                case 'w': case 'W': controls.pan(0, panSpeed); break;
+                case 's': case 'S': controls.pan(0, -panSpeed); break;
+                case 'a': case 'A': controls.pan(panSpeed, 0); break;
+                case 'd': case 'D': controls.pan(-panSpeed, 0); break;
+            }
+        });
 
         // ========== EARTH ==========
         const earthGroup = new THREE.Group();
@@ -604,6 +625,20 @@
         // ========== DATA ==========
         let artemisData = null, issData = null;
         let cameraMode = 'free';
+        let dataStatus = { artemis: false, iss: false };
+        
+        function updateConnectionStatus() {
+            const artemisStatus = document.getElementById('artemis-status');
+            const issStatus = document.getElementById('iss-status');
+            if (artemisStatus) {
+                artemisStatus.textContent = dataStatus.artemis ? '● CONNECTED' : '● OFFLINE';
+                artemisStatus.className = dataStatus.artemis ? 'text-green-400' : 'text-red-500';
+            }
+            if (issStatus) {
+                issStatus.textContent = dataStatus.iss ? '● CONNECTED' : '● OFFLINE';
+                issStatus.className = dataStatus.iss ? 'text-green-400' : 'text-red-500';
+            }
+        }
 
         async function updateArtemis() {
             try {
@@ -641,6 +676,8 @@
                 else if (moonDistKm < 50000) phase = 'LUNAR APPROACH';
                 
                 artemisData = { x, y, z, distKm, velMs, moonDistKm, phase };
+                dataStatus.artemis = true;
+                updateConnectionStatus();
                 
                 document.getElementById('artemis-dist').textContent = Math.floor(distKm).toLocaleString() + ' km';
                 document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDistKm).toLocaleString() + ' km';
@@ -667,6 +704,8 @@
                 addLog(`Artemis: ${Math.floor(distKm).toLocaleString()} km [${phase}]`, 'artemis');
                 
             } catch(e) {
+                dataStatus.artemis = false;
+                updateConnectionStatus();
                 addLog(`Artemis: ${e.message}`, 'error');
                 // Fallback demo position
                 const angle = Date.now() * 0.00005;
@@ -695,7 +734,12 @@
                 );
                 issGroup.lookAt(0, 0, 0);
                 
+                dataStatus.iss = true;
+                updateConnectionStatus();
+                
             } catch(e) {
+                dataStatus.iss = false;
+                updateConnectionStatus();
                 addLog(`ISS error: ${e.message}`, 'error');
             }
         }
