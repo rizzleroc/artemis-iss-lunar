@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBITAL COMMAND // UNIFIED SATELLITE TRACKING SYSTEM</title>
-    <!-- Tailwind CSS - using CDN for demo (production would use PostCSS) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
+    <title>ORBITAL COMMAND // UNIFIED SPACE TRACKING</title>
     <script type="importmap">
         {
             "imports": {
@@ -15,7 +12,6 @@
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -23,6 +19,7 @@
             color: #e0f0ff; 
             font-family: 'Rajdhani', sans-serif;
             overflow: hidden;
+            font-size: 12px;
         }
         .crt {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -32,7 +29,7 @@
             pointer-events: none; z-index: 1000; opacity: 0.4;
         }
         .hud-panel {
-            background: rgba(5, 15, 30, 0.95);
+            background: rgba(5, 15, 30, 0.92);
             border: 1px solid rgba(64, 156, 255, 0.3);
             backdrop-filter: blur(12px);
             box-shadow: 0 8px 32px rgba(0, 60, 120, 0.3);
@@ -40,7 +37,7 @@
         .hud-header {
             background: linear-gradient(90deg, rgba(0,100,200,0.4), rgba(0,60,120,0.2));
             border-bottom: 1px solid rgba(64, 156, 255, 0.4);
-            padding: 10px 14px;
+            padding: 8px 12px;
             font-weight: 700;
             letter-spacing: 2px;
             font-size: 11px;
@@ -56,7 +53,6 @@
             font-weight: 600;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             border-bottom: 2px solid transparent;
             transition: all 0.3s;
         }
@@ -64,39 +60,41 @@
             color: #fff;
             border-bottom-color: #409cff;
         }
-        .metric { padding: 10px; border-bottom: 1px solid rgba(64, 156, 255, 0.1); }
+        .metric { padding: 8px; border-bottom: 1px solid rgba(64, 156, 255, 0.1); }
         .metric-label { 
             color: rgba(160, 190, 220, 0.6); 
             font-size: 9px; 
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
         }
         .metric-value { 
             color: #fff; 
             font-size: 16px; 
             font-weight: 600;
-            font-family: 'Share Tech Mono', monospace;
+            font-family: monospace;
             text-shadow: 0 0 10px rgba(100, 180, 255, 0.4);
         }
         .artemis { color: #f472b6; }
         .iss { color: #60a5fa; }
         .lunar { color: #fbbf24; }
-        .gps { color: #4ade80; }
-        .starlink { color: #a78bfa; }
-        .debris { color: #f87171; }
+        .planetary { color: #4ade80; }
         
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        .ui-layer { position: relative; z-index: 100; pointer-events: none; }
+        .ui-layer { position: relative; z-index: 100; pointer-events: none; display: flex; height: 100vh; }
         .ui-layer > * { pointer-events: auto; }
         
-        #log { height: 80px; overflow-y: auto; font-family: 'Share Tech Mono', monospace; font-size: 10px; padding: 8px; }
-        .log-entry { margin-bottom: 3px; padding-left: 6px; border-left: 2px solid; }
+        #log { height: 80px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 8px; }
+        .log-entry { margin-bottom: 2px; padding-left: 6px; border-left: 2px solid; }
         
-        .control-panel {
+        .camera-controls {
             position: absolute; bottom: 20px; left: 50%;
             transform: translateX(-50%);
             display: flex; flex-direction: column; gap: 8px;
             z-index: 200; align-items: center;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(64, 156, 255, 0.3);
         }
         .camera-btn {
             background: rgba(5, 15, 30, 0.95);
@@ -105,6 +103,7 @@
             font-family: 'Rajdhani', sans-serif; font-weight: 600;
             cursor: pointer; transition: all 0.3s;
             text-transform: uppercase; font-size: 10px;
+            min-width: 120px;
         }
         .camera-btn:hover, .camera-btn.active {
             background: rgba(64, 156, 255, 0.3);
@@ -112,248 +111,266 @@
         }
         .camera-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         
-        .satellite-list {
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 10px;
-        }
+        .satellite-list { max-height: 120px; overflow-y: auto; font-size: 10px; }
         .sat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 8px;
-            border-bottom: 1px solid rgba(64, 156, 255, 0.1);
+            display: flex; justify-content: space-between;
+            padding: 4px 8px; border-bottom: 1px solid rgba(64, 156, 255, 0.1);
             cursor: pointer;
         }
         .sat-item:hover { background: rgba(64, 156, 255, 0.1); }
         
         .source-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 8px;
-            text-transform: uppercase;
+            display: inline-block; padding: 2px 6px; border-radius: 3px;
+            font-size: 8px; text-transform: uppercase;
         }
-        .badge-nasa { background: rgba(244, 114, 182, 0.2); color: #f472b6; }
-        .badge-celestrak { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
-        .badge-n2yo { background: rgba(167, 139, 250, 0.2); color: #a78bfa; }
-        .badge-satnogs { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+        .badge-connected { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .badge-offline { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-demo { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
         
-        .toggle-switch {
-            display: flex; align-items: center; gap: 8px;
-            padding: 4px 8px;
-            cursor: pointer;
+        .timeline-container { padding: 8px; max-height: 150px; overflow-y: auto; }
+        .timeline-item {
+            display: flex; align-items: flex-start;
+            padding: 4px 0; border-left: 2px solid rgba(64, 156, 255, 0.3);
+            padding-left: 8px; margin-left: 4px; position: relative;
+            font-size: 10px;
         }
-        .toggle-dot {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            background: #333;
-            border: 2px solid #555;
-            transition: all 0.3s;
+        .timeline-item::before {
+            content: ''; position: absolute; left: -4px; top: 6px;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(64, 156, 255, 0.3);
+            border: 2px solid rgba(64, 156, 255, 0.5);
         }
-        .toggle-dot.active {
-            background: #4ade80;
-            border-color: #4ade80;
-            box-shadow: 0 0 8px #4ade80;
-        }
+        .timeline-item.active::before { background: #4ade80; border-color: #4ade80; }
+        .timeline-item.completed::before { background: #409cff; border-color: #409cff; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(64, 156, 255, 0.5); }
         
-        .hint {
-            position: absolute; bottom: 130px; left: 50%;
+        .controls-hint {
+            position: absolute; bottom: 180px; left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); padding: 6px 12px;
-            border-radius: 4px; font-size: 10px;
+            background: rgba(0,0,0,0.8); padding: 8px 16px;
+            border-radius: 4px; font-size: 11px;
             color: rgba(160, 190, 220, 0.8);
             border: 1px solid rgba(64, 156, 255, 0.3);
-            pointer-events: none;
+            pointer-events: none; z-index: 199;
         }
+        
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 5000;
+            transition: opacity 0.5s;
+        }
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loader {
+            width: 60px; height: 60px;
+            border: 3px solid rgba(64, 156, 255, 0.3);
+            border-top-color: #409cff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="crt"></div>
     <div id="canvas-container"></div>
     
-    <div class="ui-layer flex h-screen">
-        <!-- Left Panel - Multi-Tab -->
-        <div class="w-96 flex flex-col m-3 mt-16 gap-3">
+    <div class="loading-overlay" id="loading">
+        <div class="loader"></div>
+        <div style="margin-top: 20px; color: #409cff; font-size: 14px;">INITIALIZING ORBITAL COMMAND...</div>
+        <div style="margin-top: 10px; color: #666; font-size: 11px;" id="loading-status">Connecting to data sources...</div>
+    </div>
+    
+    <div class="ui-layer">
+        <!-- Left Panel -->
+        <div style="width: 380px; display: flex; flex-direction: column; margin: 10px; margin-top: 60px; gap: 10px;">
+            
             <!-- Tabs -->
             <div class="hud-panel">
-                <div class="flex border-b border-blue-900/50">
-                    <button class="tab-btn active" onclick="switchTab('artemis')">Artemis</button>
-                    <button class="tab-btn" onclick="switchTab('constellations')">Constellations</button>
-                    <button class="tab-btn" onclick="switchTab('catalog')">Catalog</button>
+                <div style="display: flex; border-bottom: 1px solid rgba(64, 156, 255, 0.2);">
+                    <button class="tab-btn active" onclick="switchTab('mission')">Mission</button>
+                    <button class="tab-btn" onclick="switchTab('system')">System</button>
+                    <button class="tab-btn" onclick="switchTab('planets')">Planets</button>
                 </div>
                 
-                <!-- Artemis Tab -->
-                <div id="tab-artemis" class="tab-content">
+                <!-- Mission Tab -->
+                <div id="tab-mission" class="tab-content">
                     <div class="hud-header" style="background: linear-gradient(90deg, rgba(244,114,182,0.3), rgba(244,114,182,0.1));">
-                        <span class="artemis">ARTEMIS II // NASA JPL</span>
-                        <span class="source-badge badge-nasa">JPL Horizons</span>
+                        <span class="artemis">ARTEMIS II</span>
+                        <span id="artemis-status" class="source-badge badge-demo">CONNECTING</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 p-2">
-                        <div class="metric">
-                            <div class="metric-label">Earth Distance</div>
-                            <div class="metric-value artemis" id="artemis-dist">---</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Moon Distance</div>
-                            <div class="metric-value lunar" id="artemis-moon-dist">---</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Velocity</div>
-                            <div class="metric-value" id="artemis-vel">---</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Phase</div>
-                            <div class="metric-value artemis" style="font-size: 12px;" id="artemis-phase">---</div>
-                        </div>
-                    </div>
-                    
-                    <div class="p-2 border-t border-blue-900/30">
-                        <div class="text-xs text-gray-400 mb-2">MISSION TIMELINE</div>
-                        <div class="space-y-1 text-xs">
-                            <div class="flex justify-between"><span>Launch</span><span class="text-green-400">✓ Complete</span></div>
-                            <div class="flex justify-between"><span>TCI Burn</span><span class="text-green-400">✓ Complete</span></div>
-                            <div class="flex justify-between"><span class="artemis">Outbound</span><span class="artemis">● Active</span></div>
-                            <div class="flex justify-between text-gray-500"><span>Lunar Flyby</span><span>⏳ T+3d</span></div>
-                            <div class="flex justify-between text-gray-500"><span>Splashdown</span><span>⏳ T+10d</span></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Constellations Tab -->
-                <div id="tab-constellations" class="tab-content hidden">
-                    <div class="hud-header">
-                        <span>ACTIVE CONSTELLATIONS</span>
-                        <span class="source-badge badge-celestrak">Celestrak</span>
-                    </div>
-                    <div class="p-2 space-y-2">
-                        <div class="toggle-switch" onclick="toggleLayer('gps')">
-                            <div class="toggle-dot active" id="toggle-gps"></div>
-                            <span class="text-xs">GPS Constellation (31 sats)</span>
-                            <span class="gps text-xs ml-auto">●</span>
-                        </div>
-                        <div class="toggle-switch" onclick="toggleLayer('starlink')">
-                            <div class="toggle-dot active" id="toggle-starlink"></div>
-                            <span class="text-xs">Starlink (5000+ sats)</span>
-                            <span class="starlink text-xs ml-auto">●</span>
-                        </div>
-                        <div class="toggle-switch" onclick="toggleLayer('iss')">
-                            <div class="toggle-dot active" id="toggle-iss"></div>
-                            <span class="text-xs">ISS & Tiangong</span>
-                            <span class="iss text-xs ml-auto">●</span>
-                        </div>
-                        <div class="toggle-switch" onclick="toggleLayer('debris')">
-                            <div class="toggle-dot" id="toggle-debris"></div>
-                            <span class="text-xs">Debris Tracking</span>
-                            <span class="debris text-xs ml-auto">●</span>
+                    <div style="padding: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="metric">
+                                <div class="metric-label">Earth Distance</div>
+                                <div class="metric-value artemis" id="artemis-dist">---</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Moon Distance</div>
+                                <div class="metric-value lunar" id="artemis-moon-dist">---</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Velocity</div>
+                                <div class="metric-value" id="artemis-vel">---</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Phase</div>
+                                <div class="metric-value artemis" style="font-size: 12px;" id="artemis-phase">---</div>
+                            </div>
                         </div>
                         
-                        <div class="border-t border-blue-900/30 pt-2 mt-2">
-                            <div class="text-xs text-gray-400 mb-1">TRACKING STATS</div>
-                            <div class="grid grid-cols-2 gap-2 text-xs">
-                                <div><span class="text-gray-500">Active:</span> <span id="active-sats" class="text-green-400">0</span></div>
-                                <div><span class="text-gray-500">Updated:</span> <span id="last-update">--:--</span></div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(64, 156, 255, 0.2);">
+                            <div style="font-size: 10px; color: rgba(160,190,220,0.6); margin-bottom: 5px;">MISSION TIMELINE</div>
+                            <div class="timeline-container">
+                                <div class="timeline-item completed"><span style="width: 50px; color: #666;">T+00:00</span><span>Launch</span></div>
+                                <div class="timeline-item completed"><span style="width: 50px; color: #666;">T+00:08</span><span>Core Stage Sep</span></div>
+                                <div class="timeline-item active" id="timeline-current"><span style="width: 50px; color: #4ade80;">NOW</span><span class="artemis" id="current-phase">Outbound Coast</span></div>
+                                <div class="timeline-item"><span style="width: 50px; color: #666;">T+3-4d</span><span>Lunar Flyby</span></div>
+                                <div class="timeline-item"><span style="width: 50px; color: #666;">T+10d</span><span>Splashdown</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Catalog Tab -->
-                <div id="tab-catalog" class="tab-content hidden">
+                <!-- System Tab -->
+                <div id="tab-system" class="tab-content" style="display: none;">
                     <div class="hud-header">
-                        <span>SATELLITE CATALOG</span>
-                        <span class="source-badge badge-n2yo">N2YO + SatNOGS</span>
+                        <span>TRACKED OBJECTS</span>
+                        <span id="object-count" class="source-badge badge-connected">0 Active</span>
                     </div>
                     <div class="satellite-list" id="satellite-list">
-                        <!-- Populated by JS -->
+                        <div style="padding: 10px; color: #666;">Loading objects...</div>
+                    </div>
+                </div>
+                
+                <!-- Planets Tab -->
+                <div id="tab-planets" class="tab-content" style="display: none;">
+                    <div class="hud-header" style="background: linear-gradient(90deg, rgba(74,222,128,0.3), rgba(74,222,128,0.1));">
+                        <span class="planetary">SOLAR SYSTEM</span>
+                        <span class="source-badge badge-connected">VSOP87</span>
+                    </div>
+                    <div style="padding: 10px;" id="planets-list">
+                        <div style="padding: 10px; color: #666;">Calculating positions...</div>
                     </div>
                 </div>
             </div>
             
-            <!-- System Log -->
-            <div class="hud-panel flex flex-col" style="flex: 1;">
-                <div class="hud-header text-xs">SYSTEM LOG</div>
-                <div id="log" class="flex-1"></div>
-            </div>
-        </div>
-
-        <!-- Center -->
-        <div class="flex-1"></div>
-
-        <!-- Right Panel -->
-        <div class="w-80 flex flex-col m-3 mt-16 gap-3">
-            <!-- Data Sources Status -->
+            <!-- Data Sources -->
             <div class="hud-panel">
                 <div class="hud-header">DATA SOURCES</div>
-                <div class="p-2 space-y-1 text-xs">
-                    <div class="flex justify-between items-center">
+                <div style="padding: 10px; font-size: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span>NASA JPL Horizons</span>
-                        <span id="status-jpl" class="source-badge badge-nasa">Connecting...</span>
+                        <span id="source-jpl" class="source-badge badge-demo">Connecting...</span>
                     </div>
-                    <div class="flex justify-between items-center">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span>WhereTheISS.at</span>
-                        <span id="status-iss" class="source-badge badge-satnogs">Connecting...</span>
+                        <span id="source-iss" class="source-badge badge-demo">Connecting...</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span>Celestrak TLEs</span>
-                        <span id="status-celestrak" class="source-badge badge-celestrak">Connecting...</span>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>NASA DSN Now</span>
+                        <span id="source-dsn" class="source-badge badge-demo">Connecting...</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span>N2YO API</span>
-                        <span id="status-n2yo" class="source-badge badge-n2yo">Connecting...</span>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>VSOP87 Planets</span>
+                        <span class="source-badge badge-connected">Active</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Selected Object Info -->
+            <!-- Log -->
+            <div class="hud-panel" style="flex: 1;">
+                <div class="hud-header" style="font-size: 10px;">SYSTEM LOG</div>
+                <div id="log"></div>
+            </div>
+        </div>
+
+        <!-- Center Spacer -->
+        <div style="flex: 1;"></div>
+
+        <!-- Right Panel -->
+        <div style="width: 300px; display: flex; flex-direction: column; margin: 10px; margin-top: 60px; gap: 10px;">
+            
+            <!-- ISS Panel -->
             <div class="hud-panel">
-                <div class="hud-header">SELECTED OBJECT</div>
-                <div class="p-3">
-                    <div class="metric-value mb-2" id="selected-name">None Selected</div>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div><span class="text-gray-500">NORAD ID:</span> <span id="selected-norad">---</span></div>
-                        <div><span class="text-gray-500">Type:</span> <span id="selected-type">---</span></div>
-                        <div><span class="text-gray-500">Altitude:</span> <span id="selected-alt">---</span></div>
-                        <div><span class="text-gray-500">Velocity:</span> <span id="selected-vel">---</span></div>
-                        <div><span class="text-gray-500">Lat:</span> <span id="selected-lat">---</span></div>
-                        <div><span class="text-gray-500">Lon:</span> <span id="selected-lon">---</span></div>
+                <div class="hud-header" style="background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(96,165,250,0.1));">
+                    <span class="iss">ISS // TRACKING</span>
+                    <span id="iss-status" class="source-badge badge-demo">Connecting...</span>
+                </div>
+                <div style="padding: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: center;">
+                        <div>
+                            <div class="metric-label">LAT</div>
+                            <div class="metric-value iss" style="font-size: 12px;" id="iss-lat">--</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">LON</div>
+                            <div class="metric-value iss" style="font-size: 12px;" id="iss-lon">--</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">ALT</div>
+                            <div class="metric-value" style="font-size: 12px;" id="iss-alt">--</div>
+                        </div>
                     </div>
-                    <div class="mt-2 text-xs text-gray-500" id="selected-source">Data source: --</div>
                 </div>
             </div>
             
-            <!-- Moon Data -->
+            <!-- Moon Panel -->
             <div class="hud-panel">
                 <div class="hud-header" style="background: linear-gradient(90deg, rgba(251,191,36,0.3), rgba(251,191,36,0.1));">
-                    <span class="lunar">LUNAR DATA</span>
-                    <span class="source-badge" style="background: rgba(251,191,36,0.2); color: #fbbf24;">Ephemeris</span>
+                    <span class="lunar">MOON // ELP2000</span>
+                    <span class="source-badge badge-connected">Active</span>
                 </div>
-                <div class="p-2 grid grid-cols-2 gap-2 text-xs">
-                    <div><span class="text-gray-500">Distance:</span> <span class="lunar font-mono" id="moon-dist">---</span></div>
-                    <div><span class="text-gray-500">Phase:</span> <span id="moon-phase">---</span></div>
-                    <div><span class="text-gray-500">Elongation:</span> <span id="moon-elong">---</span></div>
-                    <div><span class="text-gray-500">Perigee:</span> <span class="lunar" id="moon-perigee">---</span></div>
+                <div style="padding: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                        <div><span style="color: #666;">Distance:</span> <span class="lunar" id="moon-dist">---</span></div>
+                        <div><span style="color: #666;">Phase:</span> <span id="moon-phase">---</span></div>
+                        <div><span style="color: #666;">Illum:</span> <span id="moon-illum">--%</span></div>
+                        <div><span style="color: #666;">Perigee:</span> <span class="lunar" id="moon-perigee">---</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DSN Panel -->
+            <div class="hud-panel">
+                <div class="hud-header">
+                    <span>DEEP SPACE NETWORK</span>
+                    <span id="dsn-status" class="source-badge badge-demo">Connecting...</span>
+                </div>
+                <div style="padding: 10px;" id="dsn-data">
+                    <div style="font-size: 10px; color: #666;">Loading DSN status...</div>
+                </div>
+            </div>
+            
+            <!-- Selected Object -->
+            <div class="hud-panel" style="flex: 1;">
+                <div class="hud-header">SELECTED OBJECT</div>
+                <div style="padding: 10px;">
+                    <div class="metric-value" style="font-size: 14px; margin-bottom: 10px;" id="selected-name">None</div>
+                    <div style="font-size: 10px; color: #666;" id="selected-details">Click an object to view details</div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="hint">
-        🖱️ LEFT: Rotate | RIGHT: Pan | SCROLL: Zoom | WASD: Pan | CLICK: Select Object
+    <div class="controls-hint">
+        🖱️ LEFT: Rotate | RIGHT: Pan | SCROLL: Zoom | ⌨️ WASD: Pan | 1-9: Camera Views
     </div>
     
-    <div class="control-panel">
+    <div class="camera-controls">
         <div class="camera-grid">
-            <button class="camera-btn" onclick="setCamera('artemis')">Artemis</button>
-            <button class="camera-btn" onclick="setCamera('iss')">ISS</button>
-            <button class="camera-btn" onclick="setCamera('earth')">Earth</button>
-            <button class="camera-btn" onclick="setCamera('moon')">Moon</button>
-            <button class="camera-btn active" onclick="setCamera('free')">Free</button>
-            <button class="camera-btn" onclick="setCamera('gps')">GPS</button>
-            <button class="camera-btn" onclick="setCamera('starlink')">Starlink</button>
-            <button class="camera-btn" onclick="setCamera('system')">System</button>
+            <button class="camera-btn" onclick="setCamera('artemis')">1. Artemis</button>
+            <button class="camera-btn" onclick="setCamera('iss')">2. ISS</button>
+            <button class="camera-btn" onclick="setCamera('moon')">3. Moon</button>
+            <button class="camera-btn" onclick="setCamera('earth')">4. Earth</button>
+            <button class="camera-btn active" onclick="setCamera('free')">5. Free</button>
+            <button class="camera-btn" onclick="setCamera('system')">6. System</button>
+            <button class="camera-btn" onclick="setCamera('mars')">7. Mars</button>
+            <button class="camera-btn" onclick="setCamera('jupiter')">8. Jupiter</button>
         </div>
     </div>
 
@@ -364,7 +381,10 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-        // ========== SCENE ==========
+        // ========== CONFIGURATION ==========
+        const API_BASE = 'https://kimicode.vercel.app/api';
+        
+        // ========== SCENE SETUP ==========
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000205);
         scene.fog = new THREE.FogExp2(0x000205, 0.00005);
@@ -381,17 +401,19 @@
 
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
-        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.3, 0.4, 0.85));
+        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.35, 0.4, 0.85));
 
+        // ========== CONTROLS ==========
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.minDistance = 5;
-        controls.maxDistance = 5000;
+        controls.maxDistance = 10000;
         controls.enablePan = true;
         controls.screenSpacePanning = true;
+        controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
 
-        // Keyboard pan
+        // Keyboard controls
         document.addEventListener('keydown', (e) => {
             const speed = camera.position.distanceTo(controls.target) * 0.02;
             switch(e.key.toLowerCase()) {
@@ -399,58 +421,41 @@
                 case 's': case 'arrowdown': controls.pan(0, -speed); break;
                 case 'a': case 'arrowleft': controls.pan(speed, 0); break;
                 case 'd': case 'arrowright': controls.pan(-speed, 0); break;
+                case '1': setCamera('artemis'); break;
+                case '2': setCamera('iss'); break;
+                case '3': setCamera('moon'); break;
+                case '4': setCamera('earth'); break;
+                case '5': setCamera('free'); break;
+                case '6': setCamera('system'); break;
             }
         });
 
-        // ========== EARTH ==========
+        // ========== CELESTIAL BODIES ==========
+        const textureLoader = new THREE.TextureLoader();
+        
+        // Earth
         const earthGroup = new THREE.Group();
         scene.add(earthGroup);
-
-        const textureLoader = new THREE.TextureLoader();
-        // Use reliable texture URLs with CORS support
-        const earthTexture = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg';
-        const earthNormal = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg';
-        const earthSpecular = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg';
         
         const earth = new THREE.Mesh(
             new THREE.SphereGeometry(10, 128, 128),
             new THREE.MeshStandardMaterial({
-                map: textureLoader.load(earthTexture),
-                normalMap: textureLoader.load(earthNormal),
-                specularMap: textureLoader.load(earthSpecular),
+                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg'),
+                normalMap: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg'),
                 metalness: 0.1, roughness: 0.8
             })
         );
-        earth.castShadow = true; earth.receiveShadow = true;
         earthGroup.add(earth);
-
+        
         earthGroup.add(new THREE.Mesh(
             new THREE.SphereGeometry(10.3, 64, 64),
             new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.1, side: THREE.BackSide, blending: THREE.AdditiveBlending })
         ));
 
-        const nightLights = new THREE.Mesh(
-            new THREE.SphereGeometry(10.05, 64, 64),
-            new THREE.MeshBasicMaterial({
-                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_lights_2048.png'),
-                transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
-            })
-        );
-        earthGroup.add(nightLights);
-
-        const clouds = new THREE.Mesh(
-            new THREE.SphereGeometry(10.15, 64, 64),
-            new THREE.MeshStandardMaterial({
-                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png'),
-                transparent: true, opacity: 0.5
-            })
-        );
-        earthGroup.add(clouds);
-
-        // ========== MOON ==========
+        // Moon
         const moonGroup = new THREE.Group();
         scene.add(moonGroup);
-
+        
         const moon = new THREE.Mesh(
             new THREE.SphereGeometry(2.7, 64, 64),
             new THREE.MeshStandardMaterial({
@@ -458,459 +463,410 @@
                 color: 0xdddddd, metalness: 0.0, roughness: 0.9
             })
         );
-        moon.castShadow = true; moon.receiveShadow = true;
         moonGroup.add(moon);
 
-        // Moon orbit
-        const moonOrbitPoints = [];
-        for (let i = 0; i <= 128; i++) {
-            const angle = (i / 128) * Math.PI * 2;
-            moonOrbitPoints.push(new THREE.Vector3(
-                Math.cos(angle) * 60, 0, Math.sin(angle) * 60 * 0.9
-            ));
-        }
-        scene.add(new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints(moonOrbitPoints),
-            new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.15 })
-        ));
-
-        // ========== SATELLITE MANAGER ==========
-        const satelliteMeshes = {};
-        const satelliteData = {};
-        let layers = { gps: true, starlink: true, iss: true, debris: false };
+        // Sun
+        const sunGroup = new THREE.Group();
+        sunGroup.position.set(1000, 0, 0);
+        scene.add(sunGroup);
         
-        // GPS satellites (simplified, would load from Celestrak)
-        const gpsSats = [
-            { id: 'GPS BIIR-2', norad: '26360', lat: 0, lon: 0, alt: 20200 },
-            { id: 'GPS BIIF-1', norad: '36585', lat: 0, lon: 120, alt: 20200 },
-            { id: 'GPS BIIF-2', norad: '32384', lat: 0, lon: 240, alt: 20200 },
-            { id: 'GPS BIIRM-1', norad: '29601', lat: 55, lon: 0, alt: 20200 },
-            { id: 'GPS BIIRM-2', norad: '32260', lat: 55, lon: 72, alt: 20200 },
-            { id: 'GPS BIIRM-3', norad: '32393', lat: 55, lon: 144, alt: 20200 },
-            { id: 'GPS BIIRM-4', norad: '32711', lat: 55, lon: 216, alt: 20200 },
-            { id: 'GPS BIIRM-5', norad: '32951', lat: 55, lon: 288, alt: 20200 },
-        ];
-        
-        // Starlink (representative sample)
-        const starlinkSats = [];
-        for (let i = 0; i < 60; i++) {
-            const angle = (i / 60) * Math.PI * 2;
-            const plane = Math.floor(i / 20);
-            starlinkSats.push({
-                id: `Starlink-${1000 + i}`,
-                norad: 40000 + i,
-                plane: plane,
-                slot: i % 20,
-                lat: 0, lon: 0, alt: 550
-            });
-        }
+        const sun = new THREE.Mesh(
+            new THREE.SphereGeometry(50, 64, 64),
+            new THREE.MeshBasicMaterial({ color: 0xffffaa })
+        );
+        sunGroup.add(sun);
+        sunGroup.add(new THREE.PointLight(0xffffff, 2, 5000));
 
-        function createSatelliteMesh(color, size) {
-            const mesh = new THREE.Mesh(
-                new THREE.SphereGeometry(size, 16, 16),
-                new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 })
-            );
-            mesh.add(new THREE.Mesh(
-                new THREE.SphereGeometry(size * 2, 8, 8),
-                new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending })
-            ));
-            return mesh;
-        }
+        // Planets container
+        const planetsGroup = new THREE.Group();
+        scene.add(planetsGroup);
 
-        // Create GPS meshes
-        gpsSats.forEach(sat => {
-            const mesh = createSatelliteMesh(0x4ade80, 0.15);
-            mesh.userData = { ...sat, type: 'GPS', source: 'Celestrak' };
-            scene.add(mesh);
-            satelliteMeshes[sat.norad] = mesh;
-            satelliteData[sat.norad] = sat;
-        });
-
-        // Create Starlink meshes
-        starlinkSats.forEach(sat => {
-            const mesh = createSatelliteMesh(0xa78bfa, 0.08);
-            mesh.userData = { ...sat, type: 'Starlink', source: 'Celestrak' };
-            scene.add(mesh);
-            satelliteMeshes[sat.norad] = mesh;
-            satelliteData[sat.norad] = sat;
-        });
-
-        // ========== ARTEMIS II ==========
+        // ========== SPACECRAFT ==========
         const artemisGroup = new THREE.Group();
         scene.add(artemisGroup);
-
+        
+        // Artemis model
         const whiteMetal = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 0.7, roughness: 0.3 });
         const goldFoil = new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.9, roughness: 0.2 });
         const solarPanel = new THREE.MeshStandardMaterial({ color: 0x1a237e, metalness: 0.5, roughness: 0.3, emissive: 0x0a0a3e, emissiveIntensity: 0.2 });
-
-        const crewMod = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.65), whiteMetal);
-        crewMod.rotation.x = Math.PI; crewMod.position.y = 0.4;
-        artemisGroup.add(crewMod);
-
-        const svcMod = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), whiteMetal);
-        svcMod.position.y = -0.4;
-        artemisGroup.add(svcMod);
-
+        
+        artemisGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.65), whiteMetal).rotateX(Math.PI).translateY(0.4));
+        artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), whiteMetal).translateY(-0.4));
+        
         [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([x, z]) => {
             const panel = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.02, 0.4), solarPanel);
             panel.position.set(x * 1.0, -0.3, z * 1.0);
-            panel.rotation[z ? 'x' : 'z'] = (x || z) * 0.1;
             artemisGroup.add(panel);
         });
-
+        
         artemisGroup.scale.set(0.4, 0.4, 0.4);
-        artemisGroup.userData = { id: 'Artemis II Orion', norad: '-1024', type: 'Crewed', source: 'NASA JPL' };
 
-        // Artemis trail
-        const artemisTrail = new THREE.Line(
-            new THREE.BufferGeometry(),
-            new THREE.LineBasicMaterial({ color: 0xf472b6, transparent: true, opacity: 0.6 })
-        );
-        scene.add(artemisTrail);
-        let artemisTrailPoints = [];
-
-        // ========== ISS ==========
+        // ISS
         const issGroup = new THREE.Group();
         scene.add(issGroup);
-
         issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.3), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })));
         issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.03, 0.8), solarPanel));
-        issGroup.userData = { id: 'ISS', norad: '25544', type: 'Space Station', source: 'WhereTheISS.at' };
 
-        // ========== LIGHTING ==========
-        const sunLight = new THREE.DirectionalLight(0xffffff, 2);
-        sunLight.position.set(300, 150, 100);
-        sunLight.castShadow = true;
-        scene.add(sunLight);
-
-        scene.add(new THREE.AmbientLight(0x333333, 0.4));
-
-        // Stars
+        // ========== STARS ==========
         scene.add(new THREE.Points(
             new THREE.BufferGeometry().setFromPoints(
                 Array.from({length: 8000}, () => new THREE.Vector3(
-                    (Math.random() - 0.5) * 3000,
-                    (Math.random() - 0.5) * 3000,
-                    (Math.random() - 0.5) * 3000
+                    (Math.random() - 0.5) * 5000,
+                    (Math.random() - 0.5) * 5000,
+                    (Math.random() - 0.5) * 5000
                 ))
             ),
             new THREE.PointsMaterial({ color: 0xaaccff, size: 1.2, transparent: true, opacity: 0.7 })
         ));
 
-        // ========== LOGGING ==========
+        // ========== DATA MANAGEMENT ==========
         const logEl = document.getElementById('log');
         function addLog(msg, type='info') {
             const time = new Date().toISOString().split('T')[1].split('.')[0];
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            entry.style.borderColor = type === 'artemis' ? '#f472b6' : type === 'iss' ? '#60a5fa' : type === 'gps' ? '#4ade80' : type === 'starlink' ? '#a78bfa' : '#409cff';
+            entry.style.borderColor = type === 'artemis' ? '#f472b6' : type === 'iss' ? '#60a5fa' : type === 'planetary' ? '#4ade80' : '#409cff';
             entry.innerHTML = `<span style="color:#666">[${time}]</span> ${msg}`;
             logEl.appendChild(entry);
             logEl.scrollTop = logEl.scrollHeight;
             if (logEl.children.length > 20) logEl.removeChild(logEl.firstChild);
         }
 
-        function setStatus(source, status) {
-            const el = document.getElementById('status-' + source);
-            if (el) {
-                const colors = {
-                    connected: ['rgba(74, 222, 128, 0.2)', '#4ade80'],
-                    offline: ['rgba(239, 68, 68, 0.2)', '#ef4444'],
-                    demo: ['rgba(251, 191, 36, 0.2)', '#fbbf24'],
-                    connecting: ['rgba(96, 165, 250, 0.2)', '#60a5fa']
-                };
-                const [bg, fg] = colors[status] || colors.connecting;
-                el.style.background = bg;
-                el.style.color = fg;
-                el.textContent = status.toUpperCase();
-            }
+        function setStatus(id, status, text) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.className = 'source-badge ' + (status === 'connected' ? 'badge-connected' : status === 'demo' ? 'badge-demo' : 'badge-offline');
+            el.textContent = text || status.toUpperCase();
         }
 
-        // ========== DATA FETCHING ==========
-        let selectedObject = null;
+        // ========== API INTEGRATION ==========
+        let allData = {};
         let cameraMode = 'free';
+        let selectedObject = null;
 
-        // Artemis data - using demo trajectory since NASA JPL blocks CORS from GitHub Pages
-        // In production, use a backend proxy server
-        let artemisDemoAngle = 0;
-        
-        async function fetchArtemis() {
+        async function fetchAllData() {
             try {
-                // Try CORS proxy first
-                const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                const now = new Date();
-                const pad = n => n.toString().padStart(2, '0');
-                const date = `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())}`;
+                document.getElementById('loading-status').textContent = 'Fetching orbital data...';
                 
-                const targetUrl = encodeURIComponent(`https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND='-1024'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&CENTER='500@399'&START_TIME='${date}'&STOP_TIME='${date}'&STEP_SIZE='1d'&VEC_TABLE='2'&OUT_UNITS='KM-S'`);
+                const response = await fetch(`${API_BASE}?endpoint=all`);
+                if (!response.ok) throw new Error('API Error');
                 
-                const res = await fetch(proxyUrl + targetUrl, { timeout: 5000 });
+                allData = await response.json();
                 
-                if (!res.ok) throw new Error('Proxy failed');
+                updateUIFromData();
+                update3DPositions();
                 
-                const data = await res.json();
-                
-                if (!data.result?.includes('$$SOE')) throw new Error('No data');
-                
-                const block = data.result.split('$$SOE')[1].split('$$EOE')[0];
-                
-                const extract = (key, space) => {
-                    const m = block.match(new RegExp(`${key}${space ? ' ' : ''}=([+-]?\\d*\\.?\\d+(?:[eEdD][+-]?\\d+)?)`, 'gi'));
-                    if (!m) return 0;
-                    const v = m[m.length-1].match(/=([+-]?\d*\.?\d+(?:[eEdD][+-]?\d+)?)/i);
-                    return v ? parseFloat(v[1].replace(/D/i, 'e')) : 0;
-                };
-                
-                const [x, y, z] = [extract('X', true), extract('Y', true), extract('Z', true)];
-                const dist = Math.sqrt(x*x + y*y + z*z);
-                const moonDist = Math.abs(384400 - dist);
-                
-                let phase = 'OUTBOUND COAST';
-                if (dist < 10000) phase = 'EARTH ORBIT';
-                else if (dist < 100000) phase = 'CLIMBING';
-                else if (dist < 300000) phase = 'TRANS-LUNAR';
-                else if (moonDist < 50000) phase = 'LUNAR APPROACH';
-                
-                document.getElementById('artemis-dist').textContent = Math.floor(dist).toLocaleString() + ' km';
-                document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDist).toLocaleString() + ' km';
-                document.getElementById('artemis-vel').textContent = '10,250 m/s';
-                document.getElementById('artemis-phase').textContent = phase;
-                
-                const scale = 0.01;
-                artemisGroup.position.set(x * scale, y * scale, z * scale);
-                artemisGroup.lookAt(0, 0, 0);
-                
-                setStatus('jpl', 'connected');
-                addLog(`Artemis: ${Math.floor(dist).toLocaleString()} km [${phase}]`, 'artemis');
+                document.getElementById('loading').classList.add('hidden');
                 
             } catch(e) {
-                // Use demo trajectory when API fails
-                setStatus('jpl', 'demo');
-                
-                artemisDemoAngle += 0.002;
-                const r = 35 + Math.sin(artemisDemoAngle * 0.5) * 15;
-                const x = Math.cos(artemisDemoAngle) * r;
-                const z = Math.sin(artemisDemoAngle) * r;
-                const y = Math.sin(artemisDemoAngle * 0.3) * 5;
-                
-                artemisGroup.position.set(x, y, z);
-                artemisGroup.lookAt(0, 0, 0);
-                
-                const dist = Math.sqrt(x*x + y*y + z*z) * 100;
-                const moonDist = Math.abs(384400 - dist);
-                
-                document.getElementById('artemis-dist').textContent = Math.floor(dist).toLocaleString() + ' km';
-                document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDist).toLocaleString() + ' km';
-                document.getElementById('artemis-vel').textContent = '10,250 m/s';
-                document.getElementById('artemis-phase').textContent = 'OUTBOUND COAST';
-                
-                if (Math.random() < 0.1) {
-                    addLog(`Artemis demo mode: ${Math.floor(dist).toLocaleString()} km`, 'artemis');
-                }
+                addLog(`API Error: ${e.message}`, 'error');
+                document.getElementById('loading-status').textContent = 'Using demo mode...';
+                setTimeout(() => document.getElementById('loading').classList.add('hidden'), 1000);
             }
         }
 
-        async function fetchISS() {
-            try {
-                const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-                const data = await res.json();
-                
-                document.getElementById('iss-lat').textContent = data.latitude.toFixed(1) + '°';
-                document.getElementById('iss-lon').textContent = data.longitude.toFixed(1) + '°';
-                document.getElementById('iss-alt').textContent = data.altitude.toFixed(0) + ' km';
-                
-                const phi = (90 - data.latitude) * Math.PI / 180;
-                const theta = (data.longitude + 180) * Math.PI / 180;
-                const r = 10 + data.altitude / 6371 * 10;
-                
+        function updateUIFromData() {
+            // Artemis
+            if (allData.artemis && !allData.artemis.error) {
+                document.getElementById('artemis-dist').textContent = allData.artemis.distKm.toLocaleString() + ' km';
+                document.getElementById('artemis-moon-dist').textContent = allData.artemis.moonDistKm.toLocaleString() + ' km';
+                document.getElementById('artemis-vel').textContent = allData.artemis.velMs.toLocaleString() + ' m/s';
+                document.getElementById('artemis-phase').textContent = allData.artemis.phase;
+                document.getElementById('current-phase').textContent = allData.artemis.phase;
+                setStatus('artemis-status', 'connected', 'LIVE');
+                setStatus('source-jpl', 'connected', 'CONNECTED');
+            } else {
+                setStatus('artemis-status', 'demo', 'DEMO');
+                setStatus('source-jpl', 'demo', 'DEMO');
+            }
+            
+            // ISS
+            if (allData.iss && !allData.iss.error) {
+                document.getElementById('iss-lat').textContent = allData.iss.latitude.toFixed(1) + '°';
+                document.getElementById('iss-lon').textContent = allData.iss.longitude.toFixed(1) + '°';
+                document.getElementById('iss-alt').textContent = Math.floor(allData.iss.altitude) + ' km';
+                setStatus('iss-status', 'connected', 'LIVE');
+                setStatus('source-iss', 'connected', 'CONNECTED');
+            } else {
+                setStatus('iss-status', 'demo', 'DEMO');
+                setStatus('source-iss', 'demo', 'DEMO');
+            }
+            
+            // Moon
+            if (allData.moon) {
+                document.getElementById('moon-dist').textContent = allData.moon.distKm.toLocaleString() + ' km';
+                document.getElementById('moon-phase').textContent = allData.moon.phase;
+                document.getElementById('moon-illum').textContent = allData.moon.illumination + '%';
+                const perigee = new Date(allData.moon.nextPerigee);
+                document.getElementById('moon-perigee').textContent = perigee.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            
+            // DSN
+            if (allData.dsn && !allData.dsn.error) {
+                const dsnEl = document.getElementById('dsn-data');
+                let html = '';
+                Object.entries(allData.dsn.stations).forEach(([name, status]) => {
+                    const color = status.online ? '#4ade80' : '#fbbf24';
+                    html += `<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span>${name}</span><span style="color:${color}">${status.status}</span></div>`;
+                });
+                if (allData.dsn.spacecraft && allData.dsn.spacecraft.length > 0) {
+                    html += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(64,156,255,0.2);"><span style="color:#666;">Active:</span> ${allData.dsn.spacecraft.join(', ')}</div>`;
+                }
+                dsnEl.innerHTML = html;
+                setStatus('dsn-status', 'connected', 'ACTIVE');
+                setStatus('source-dsn', 'connected', 'CONNECTED');
+            } else {
+                setStatus('dsn-status', 'offline', 'OFFLINE');
+                setStatus('source-dsn', 'offline', 'OFFLINE');
+            }
+            
+            // Planets
+            if (allData.planets && allData.planets.planets) {
+                const planetsEl = document.getElementById('planets-list');
+                planetsEl.innerHTML = allData.planets.planets.map(p => `
+                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(64,156,255,0.1);">
+                        <span style="color:${p.color}">● ${p.name}</span>
+                        <span style="color:#666;">${Math.floor(p.distance)}M km</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Object count
+            let count = 2; // Artemis + ISS
+            if (allData.planets) count += allData.planets.planets.length;
+            document.getElementById('object-count').textContent = count + ' Active';
+            
+            // Populate satellite list
+            const listEl = document.getElementById('satellite-list');
+            listEl.innerHTML = `
+                <div class="sat-item" onclick="selectObject('artemis')">
+                    <span style="color:#f472b6;">● Artemis II</span>
+                    <span style="color:#666;">NASA</span>
+                </div>
+                <div class="sat-item" onclick="selectObject('iss')">
+                    <span style="color:#60a5fa;">● ISS</span>
+                    <span style="color:#666;">Station</span>
+                </div>
+                <div class="sat-item" onclick="selectObject('moon')">
+                    <span style="color:#fbbf24;">● Moon</span>
+                    <span style="color:#666;">Natural</span>
+                </div>
+            `;
+            if (allData.planets && allData.planets.planets) {
+                allData.planets.planets.forEach(p => {
+                    listEl.innerHTML += `
+                        <div class="sat-item" onclick="selectObject('${p.name.toLowerCase()}')">
+                            <span style="color:${p.color};">● ${p.name}</span>
+                            <span style="color:#666;">Planet</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function update3DPositions() {
+            // Artemis
+            if (allData.artemis && allData.artemis.position) {
+                const scale = 0.01;
+                artemisGroup.position.set(
+                    allData.artemis.position.x * scale,
+                    allData.artemis.position.y * scale,
+                    allData.artemis.position.z * scale
+                );
+                artemisGroup.lookAt(0, 0, 0);
+            }
+            
+            // ISS
+            if (allData.iss) {
+                const phi = (90 - allData.iss.latitude) * Math.PI / 180;
+                const theta = (allData.iss.longitude + 180) * Math.PI / 180;
+                const r = 10 + allData.iss.altitude / 6371 * 10;
                 issGroup.position.set(
                     r * Math.sin(phi) * Math.cos(theta),
                     r * Math.cos(phi),
                     r * Math.sin(phi) * Math.sin(theta)
                 );
-                
-                issGroup.userData.lat = data.latitude;
-                issGroup.userData.lon = data.longitude;
-                issGroup.userData.alt = data.altitude;
-                issGroup.userData.vel = data.velocity;
-                
-                setStatus('iss', 'connected');
-                
-            } catch(e) {
-                setStatus('iss', 'offline');
             }
-        }
-
-        async function fetchCelestrak() {
-            try {
-                // Simulate GPS orbit propagation
-                const now = Date.now();
-                gpsSats.forEach((sat, i) => {
-                    const mesh = satelliteMeshes[sat.norad];
-                    if (mesh && layers.gps) {
-                        const angle = (now * 0.0001) + (i * Math.PI / 4);
-                        const r = 10 + sat.alt / 6371 * 10;
-                        const lat = sat.lat * Math.PI / 180;
-                        const lon = angle;
-                        
-                        mesh.position.set(
-                            r * Math.cos(lat) * Math.cos(lon),
-                            r * Math.sin(lat),
-                            r * Math.cos(lat) * Math.sin(lon)
+            
+            // Moon
+            if (allData.moon) {
+                const angle = allData.moon.angle;
+                const r = 60 * (1 - 0.0549 * 0.0549) / (1 + 0.0549 * Math.cos(angle));
+                moonGroup.position.set(r * Math.cos(angle), 0, r * Math.sin(angle) * 0.9);
+            }
+            
+            // Planets
+            if (allData.planets && allData.planets.planets) {
+                // Clear old planets
+                while(planetsGroup.children.length > 0) planetsGroup.remove(planetsGroup.children[0]);
+                
+                allData.planets.planets.forEach(p => {
+                    const planet = new THREE.Mesh(
+                        new THREE.SphereGeometry(p.name === 'Jupiter' ? 5 : p.name === 'Saturn' ? 4 : 2, 32, 32),
+                        new THREE.MeshStandardMaterial({ color: p.color, metalness: 0.3, roughness: 0.7 })
+                    );
+                    planet.position.set(p.x, p.y, p.z);
+                    planet.userData = { name: p.name, type: 'Planet' };
+                    planetsGroup.add(planet);
+                    
+                    // Saturn rings
+                    if (p.name === 'Saturn') {
+                        const ring = new THREE.Mesh(
+                            new THREE.RingGeometry(5, 8, 64),
+                            new THREE.MeshBasicMaterial({ color: 0xc4a574, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
                         );
-                        mesh.visible = true;
-                    } else if (mesh) {
-                        mesh.visible = false;
+                        ring.rotation.x = Math.PI / 2;
+                        planet.add(ring);
                     }
                 });
-                
-                // Simulate Starlink orbits
-                starlinkSats.forEach((sat, i) => {
-                    const mesh = satelliteMeshes[sat.norad];
-                    if (mesh && layers.starlink) {
-                        const angle = (now * 0.0005) + (sat.plane * Math.PI / 3) + (sat.slot * Math.PI / 10);
-                        const r = 10 + sat.alt / 6371 * 10;
-                        
-                        mesh.position.set(
-                            r * Math.cos(angle),
-                            Math.sin(sat.plane) * 2,
-                            r * Math.sin(angle)
-                        );
-                        mesh.visible = true;
-                    } else if (mesh) {
-                        mesh.visible = false;
-                    }
-                });
-                
-                setStatus('celestrak', 'connected');
-                document.getElementById('active-sats').textContent = 
-                    (layers.gps ? gpsSats.length : 0) + (layers.starlink ? starlinkSats.length : 0);
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                
-            } catch(e) {
-                setStatus('celestrak', 'offline');
             }
         }
 
-        function updateMoon() {
-            const now = new Date();
-            const days = (now - new Date(2026, 0, 1)) / 86400000;
-            const angle = (days / 27.3) * Math.PI * 2;
-            
-            const r = 60 * (1 - 0.0549 * 0.0549) / (1 + 0.0549 * Math.cos(angle));
-            moonGroup.position.set(r * Math.cos(angle), 0, r * Math.sin(angle) * 0.9);
-            
-            const dist = 384400 + Math.sin(angle) * 21000;
-            document.getElementById('moon-dist').textContent = Math.floor(dist).toLocaleString() + ' km';
-            document.getElementById('moon-phase').textContent = 'Waxing Gibbous';
-            document.getElementById('moon-elong').textContent = (angle * 180 / Math.PI % 180).toFixed(0) + '°';
-            
-            const perigee = new Date(now.getTime() + (27.3 - (days % 27.3)) * 86400000);
-            document.getElementById('moon-perigee').textContent = perigee.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-
-        // ========== UI FUNCTIONS ==========
-        window.switchTab = function(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById('tab-' + tab).classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (tab === 'catalog') populateCatalog();
-        };
-
-        window.toggleLayer = function(layer) {
-            layers[layer] = !layers[layer];
-            document.getElementById('toggle-' + layer).classList.toggle('active', layers[layer]);
-            
-            if (layer === 'iss') issGroup.visible = layers[layer];
-        };
-
-        function populateCatalog() {
-            const list = document.getElementById('satellite-list');
-            list.innerHTML = '';
-            
-            const allSats = [
-                { name: 'Artemis II Orion', id: '-1024', type: 'Crewed', source: 'NASA' },
-                { name: 'ISS', id: '25544', type: 'Station', source: 'WhereTheISS' },
-                ...gpsSats.map(s => ({ ...s, name: s.id, type: 'GPS', source: 'Celestrak' })),
-                ...starlinkSats.slice(0, 10).map(s => ({ ...s, name: s.id, type: 'Starlink', source: 'Celestrak' }))
-            ];
-            
-            allSats.forEach(sat => {
-                const item = document.createElement('div');
-                item.className = 'sat-item';
-                item.innerHTML = `<span>${sat.name}</span><span class="text-gray-500">${sat.type}</span>`;
-                item.onclick = () => selectObject(sat);
-                list.appendChild(item);
-            });
-        }
-
-        function selectObject(obj) {
-            selectedObject = obj;
-            document.getElementById('selected-name').textContent = obj.name || obj.id;
-            document.getElementById('selected-norad').textContent = obj.norad;
-            document.getElementById('selected-type').textContent = obj.type;
-            document.getElementById('selected-source').textContent = `Source: ${obj.source}`;
-            
-            // Find and update position
-            let mesh = null;
-            if (obj.norad === '-1024') mesh = artemisGroup;
-            else if (obj.norad === '25544') mesh = issGroup;
-            else mesh = satelliteMeshes[obj.norad];
-            
-            if (mesh) {
-                document.getElementById('selected-lat').textContent = mesh.userData.lat?.toFixed(2) || '--';
-                document.getElementById('selected-lon').textContent = mesh.userData.lon?.toFixed(2) || '--';
-                document.getElementById('selected-alt').textContent = mesh.userData.alt ? Math.floor(mesh.userData.alt) + ' km' : '--';
-                document.getElementById('selected-vel').textContent = mesh.userData.vel ? Math.floor(mesh.userData.vel) + ' km/h' : '--';
-            }
-        }
-
+        // ========== CAMERA SYSTEM ==========
         window.setCamera = function(mode) {
             document.querySelectorAll('.camera-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             cameraMode = mode;
             
+            const duration = 1000;
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            let endPos, endTarget;
+            
             switch(mode) {
-                case 'earth': camera.position.set(30, 20, 50); controls.target.set(0, 0, 0); break;
-                case 'moon': camera.position.set(moonGroup.position.x + 20, 10, moonGroup.position.z + 20); controls.target.copy(moonGroup.position); break;
-                case 'artemis': camera.position.copy(artemisGroup.position).add(new THREE.Vector3(10, 5, 10)); controls.target.copy(artemisGroup.position); break;
-                case 'iss': camera.position.copy(issGroup.position).add(new THREE.Vector3(5, 2, 5)); controls.target.copy(issGroup.position); break;
-                case 'gps': camera.position.set(40, 30, 60); controls.target.set(0, 0, 0); break;
-                case 'starlink': camera.position.set(50, 30, 50); controls.target.set(0, 0, 0); break;
-                case 'system': camera.position.set(150, 80, 150); controls.target.set(30, 0, 0); break;
-                case 'free': break;
+                case 'earth':
+                    endPos = new THREE.Vector3(30, 20, 50);
+                    endTarget = new THREE.Vector3(0, 0, 0);
+                    break;
+                case 'moon':
+                    endPos = new THREE.Vector3(moonGroup.position.x + 20, 10, moonGroup.position.z + 20);
+                    endTarget = moonGroup.position.clone();
+                    break;
+                case 'artemis':
+                    endPos = artemisGroup.position.clone().add(new THREE.Vector3(10, 5, 10));
+                    endTarget = artemisGroup.position.clone();
+                    break;
+                case 'iss':
+                    endPos = issGroup.position.clone().add(new THREE.Vector3(5, 2, 5));
+                    endTarget = issGroup.position.clone();
+                    break;
+                case 'system':
+                    endPos = new THREE.Vector3(200, 100, 200);
+                    endTarget = new THREE.Vector3(50, 0, 0);
+                    break;
+                case 'mars':
+                    const mars = allData.planets?.planets?.find(p => p.name === 'Mars');
+                    if (mars) {
+                        endPos = new THREE.Vector3(mars.x + 50, 20, mars.z + 50);
+                        endTarget = new THREE.Vector3(mars.x, 0, mars.z);
+                    }
+                    break;
+                case 'jupiter':
+                    const jupiter = allData.planets?.planets?.find(p => p.name === 'Jupiter');
+                    if (jupiter) {
+                        endPos = new THREE.Vector3(jupiter.x + 100, 50, jupiter.z + 100);
+                        endTarget = new THREE.Vector3(jupiter.x, 0, jupiter.z);
+                    }
+                    break;
+                case 'free':
+                default:
+                    return;
+            }
+            
+            if (endPos && endTarget) {
+                // Smooth transition
+                const startTime = Date.now();
+                function animateCamera() {
+                    const elapsed = Date.now() - startTime;
+                    const t = Math.min(elapsed / duration, 1);
+                    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                    
+                    camera.position.lerpVectors(startPos, endPos, ease);
+                    controls.target.lerpVectors(startTarget, endTarget, ease);
+                    
+                    if (t < 1) requestAnimationFrame(animateCamera);
+                }
+                animateCamera();
             }
         };
 
-        // Raycaster for click selection
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        renderer.domElement.addEventListener('click', (e) => {
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        window.selectObject = function(name) {
+            selectedObject = name;
+            const nameEl = document.getElementById('selected-name');
+            const detailsEl = document.getElementById('selected-details');
             
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects([artemisGroup, issGroup, ...Object.values(satelliteMeshes)]);
-            
-            if (intersects.length > 0) {
-                const obj = intersects[0].object;
-                if (obj.userData) selectObject(obj.userData);
+            switch(name) {
+                case 'artemis':
+                    nameEl.textContent = 'Artemis II Orion';
+                    nameEl.style.color = '#f472b6';
+                    detailsEl.innerHTML = allData.artemis ? `
+                        Distance: ${allData.artemis.distKm.toLocaleString()} km<br>
+                        Velocity: ${allData.artemis.velMs.toLocaleString()} m/s<br>
+                        Phase: ${allData.artemis.phase}<br>
+                        Source: ${allData.artemis.source}
+                    ` : 'No data available';
+                    setCamera('artemis');
+                    break;
+                case 'iss':
+                    nameEl.textContent = 'International Space Station';
+                    nameEl.style.color = '#60a5fa';
+                    detailsEl.innerHTML = allData.iss ? `
+                        Latitude: ${allData.iss.latitude.toFixed(2)}°<br>
+                        Longitude: ${allData.iss.longitude.toFixed(2)}°<br>
+                        Altitude: ${allData.iss.altitude.toFixed(1)} km<br>
+                        Velocity: ${allData.iss.velocity.toFixed(0)} km/h
+                    ` : 'No data available';
+                    setCamera('iss');
+                    break;
+                case 'moon':
+                    nameEl.textContent = 'Moon';
+                    nameEl.style.color = '#fbbf24';
+                    detailsEl.innerHTML = allData.moon ? `
+                        Distance: ${allData.moon.distKm.toLocaleString()} km<br>
+                        Phase: ${allData.moon.phase}<br>
+                        Illumination: ${allData.moon.illumination}%<br>
+                        Source: ${allData.moon.source}
+                    ` : 'No data available';
+                    setCamera('moon');
+                    break;
+                default:
+                    const planet = allData.planets?.planets?.find(p => p.name.toLowerCase() === name);
+                    if (planet) {
+                        nameEl.textContent = planet.name;
+                        nameEl.style.color = planet.color;
+                        detailsEl.innerHTML = `
+                            Distance from Sun: ${planet.distance} million km<br>
+                            Orbital Period: ${planet.period} days<br>
+                            Position: X=${planet.x.toFixed(0)}, Z=${planet.z.toFixed(0)}
+                        `;
+                        setCamera(name);
+                    }
             }
-        });
+        };
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById('tab-' + tab).style.display = 'block';
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+        };
 
         // ========== ANIMATION ==========
         function animate() {
             requestAnimationFrame(animate);
             
             earth.rotation.y += 0.0005;
-            clouds.rotation.y += 0.0007;
-            nightLights.rotation.y += 0.0005;
             
-            updateMoon();
-            fetchCelestrak();
+            // Camera follow modes
+            if (cameraMode === 'artemis' && artemisGroup) {
+                const offset = new THREE.Vector3(10, 5, 10);
+                camera.position.copy(artemisGroup.position).add(offset);
+                controls.target.copy(artemisGroup.position);
+            } else if (cameraMode === 'iss' && issGroup) {
+                const offset = new THREE.Vector3(5, 2, 5);
+                camera.position.copy(issGroup.position).add(offset);
+                controls.target.copy(issGroup.position);
+            }
             
             controls.update();
             composer.render();
@@ -924,22 +880,16 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        addLog('════════════════════════════════════', 'info');
-        addLog('ORBITAL COMMAND - UNIFIED TRACKING', 'info');
-        addLog('════════════════════════════════════', 'info');
-        addLog('NASA JPL: Artemis II ephemeris', 'artemis');
-        addLog('WhereTheISS: ISS real-time', 'iss');
-        addLog('Celestrak: GPS + Starlink TLEs', 'gps');
-        addLog('SatNOGS: Amateur satellite network', 'starlink');
+        addLog('══════════════════════════════════', 'info');
+        addLog('ORBITAL COMMAND SYSTEM ONLINE', 'info');
+        addLog('══════════════════════════════════', 'info');
+        addLog('Initializing data connections...', 'info');
 
-        fetchArtemis();
-        fetchISS();
-        setInterval(fetchArtemis, 30000);
-        setInterval(fetchISS, 5000);
+        // Start data fetching
+        fetchAllData();
+        setInterval(fetchAllData, 30000);
 
         animate();
-        
-        addLog('All data sources active', 'data');
     </script>
 </body>
 </html>
