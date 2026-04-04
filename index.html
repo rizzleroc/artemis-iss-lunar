@@ -429,36 +429,71 @@
             TWO: THREE.TOUCH.PAN
         };
 
-        // Keyboard WASD controls
-        const keys = {};
-        document.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
-        document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+        // Keyboard controls - unified handler
+        const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (keys.hasOwnProperty(key) || key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
+                keys[key] = true;
+            }
+            // Number keys for camera
+            if (key >= '1' && key <= '6') {
+                const idx = parseInt(key) - 1;
+                const btn = document.querySelectorAll('.camera-btn')[idx];
+                if (btn) btn.click();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            const key = e.key;
+            if (keys.hasOwnProperty(key) || key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
+                keys[key] = false;
+            }
+        });
         
         function handleKeyboard() {
-            const speed = camera.position.distanceTo(controls.target) * 0.02;
+            const speed = camera.position.distanceTo(controls.target) * 0.03;
             const forward = new THREE.Vector3();
             const right = new THREE.Vector3();
+            let moved = false;
             
-            if (keys['w'] || keys['arrowup']) {
+            if (keys['w'] || keys['ArrowUp']) {
                 forward.subVectors(controls.target, camera.position).normalize();
-                forward.y = 0; forward.normalize().multiplyScalar(speed);
-                controls.target.add(forward); camera.position.add(forward);
+                forward.y = 0; 
+                if (forward.length() > 0) {
+                    forward.normalize().multiplyScalar(speed);
+                    controls.target.add(forward); 
+                    camera.position.add(forward);
+                    moved = true;
+                }
             }
-            if (keys['s'] || keys['arrowdown']) {
+            if (keys['s'] || keys['ArrowDown']) {
                 forward.subVectors(controls.target, camera.position).normalize();
-                forward.y = 0; forward.normalize().multiplyScalar(-speed);
-                controls.target.add(forward); camera.position.add(forward);
+                forward.y = 0;
+                if (forward.length() > 0) {
+                    forward.normalize().multiplyScalar(-speed);
+                    controls.target.add(forward); 
+                    camera.position.add(forward);
+                    moved = true;
+                }
             }
-            if (keys['a'] || keys['arrowleft']) {
+            if (keys['a'] || keys['ArrowLeft']) {
                 forward.subVectors(controls.target, camera.position).normalize();
                 right.crossVectors(forward, camera.up).normalize().multiplyScalar(-speed);
-                controls.target.add(right); camera.position.add(right);
+                controls.target.add(right); 
+                camera.position.add(right);
+                moved = true;
             }
-            if (keys['d'] || keys['arrowright']) {
+            if (keys['d'] || keys['ArrowRight']) {
                 forward.subVectors(controls.target, camera.position).normalize();
                 right.crossVectors(forward, camera.up).normalize().multiplyScalar(speed);
-                controls.target.add(right); camera.position.add(right);
+                controls.target.add(right); 
+                camera.position.add(right);
+                moved = true;
             }
+            
+            if (moved) controls.update();
         }
 
         // ========== CELESTIAL BODIES ==========
@@ -751,15 +786,7 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Number keys for camera
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '1') document.querySelector('.camera-btn:nth-child(1)')?.click();
-            if (e.key === '2') document.querySelector('.camera-btn:nth-child(2)')?.click();
-            if (e.key === '3') document.querySelector('.camera-btn:nth-child(3)')?.click();
-            if (e.key === '4') document.querySelector('.camera-btn:nth-child(4)')?.click();
-            if (e.key === '5') document.querySelector('.camera-btn:nth-child(5)')?.click();
-            if (e.key === '6') document.querySelector('.camera-btn:nth-child(6)')?.click();
-        });
+        // Keyboard controls initialized above
 
         // Init
         addLog('═══════════════════════════════', 'info');
