@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ORBITAL COMMAND // UNIFIED SATELLITE TRACKING SYSTEM</title>
+    <!-- Tailwind CSS - using CDN for demo (production would use PostCSS) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
     <script type="importmap">
@@ -406,11 +407,17 @@
         scene.add(earthGroup);
 
         const textureLoader = new THREE.TextureLoader();
+        // Use reliable texture URLs with CORS support
+        const earthTexture = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg';
+        const earthNormal = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg';
+        const earthSpecular = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg';
+        
         const earth = new THREE.Mesh(
             new THREE.SphereGeometry(10, 128, 128),
             new THREE.MeshStandardMaterial({
-                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-blue-marble.jpg'),
-                normalMap: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-topology.png'),
+                map: textureLoader.load(earthTexture),
+                normalMap: textureLoader.load(earthNormal),
+                specularMap: textureLoader.load(earthSpecular),
                 metalness: 0.1, roughness: 0.8
             })
         );
@@ -425,7 +432,7 @@
         const nightLights = new THREE.Mesh(
             new THREE.SphereGeometry(10.05, 64, 64),
             new THREE.MeshBasicMaterial({
-                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-night.jpg'),
+                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_lights_2048.png'),
                 transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
             })
         );
@@ -434,7 +441,7 @@
         const clouds = new THREE.Mesh(
             new THREE.SphereGeometry(10.15, 64, 64),
             new THREE.MeshStandardMaterial({
-                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-clouds.png'),
+                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png'),
                 transparent: true, opacity: 0.5
             })
         );
@@ -447,7 +454,7 @@
         const moon = new THREE.Mesh(
             new THREE.SphereGeometry(2.7, 64, 64),
             new THREE.MeshStandardMaterial({
-                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/moon-texture.jpg'),
+                map: textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg'),
                 color: 0xdddddd, metalness: 0.0, roughness: 0.9
             })
         );
@@ -606,9 +613,15 @@
         function setStatus(source, status) {
             const el = document.getElementById('status-' + source);
             if (el) {
-                el.className = 'source-badge ' + (status === 'connected' ? 'badge-nasa' : status === 'offline' ? '' : 'badge-satnogs');
-                el.style.background = status === 'connected' ? 'rgba(74, 222, 128, 0.2)' : status === 'offline' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(251, 191, 36, 0.2)';
-                el.style.color = status === 'connected' ? '#4ade80' : status === 'offline' ? '#ef4444' : '#fbbf24';
+                const colors = {
+                    connected: ['rgba(74, 222, 128, 0.2)', '#4ade80'],
+                    offline: ['rgba(239, 68, 68, 0.2)', '#ef4444'],
+                    demo: ['rgba(251, 191, 36, 0.2)', '#fbbf24'],
+                    connecting: ['rgba(96, 165, 250, 0.2)', '#60a5fa']
+                };
+                const [bg, fg] = colors[status] || colors.connecting;
+                el.style.background = bg;
+                el.style.color = fg;
                 el.textContent = status.toUpperCase();
             }
         }
@@ -617,15 +630,24 @@
         let selectedObject = null;
         let cameraMode = 'free';
 
+        // Artemis data - using demo trajectory since NASA JPL blocks CORS from GitHub Pages
+        // In production, use a backend proxy server
+        let artemisDemoAngle = 0;
+        
         async function fetchArtemis() {
             try {
+                // Try CORS proxy first
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
                 const now = new Date();
                 const pad = n => n.toString().padStart(2, '0');
                 const date = `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())}`;
                 
-                const url = `https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND='-1024'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&CENTER='500@399'&START_TIME='${date}'&STOP_TIME='${date}'&STEP_SIZE='1d'&VEC_TABLE='2'&OUT_UNITS='KM-S'`;
+                const targetUrl = encodeURIComponent(`https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND='-1024'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&CENTER='500@399'&START_TIME='${date}'&STOP_TIME='${date}'&STEP_SIZE='1d'&VEC_TABLE='2'&OUT_UNITS='KM-S'`);
                 
-                const res = await fetch(url.replace(/'/g, '%27').replace(/ /g, '%20'));
+                const res = await fetch(proxyUrl + targetUrl, { timeout: 5000 });
+                
+                if (!res.ok) throw new Error('Proxy failed');
+                
                 const data = await res.json();
                 
                 if (!data.result?.includes('$$SOE')) throw new Error('No data');
@@ -651,23 +673,40 @@
                 
                 document.getElementById('artemis-dist').textContent = Math.floor(dist).toLocaleString() + ' km';
                 document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDist).toLocaleString() + ' km';
-                document.getElementById('artemis-vel').textContent = Math.floor(Math.random() * 500 + 7000).toLocaleString() + ' m/s';
+                document.getElementById('artemis-vel').textContent = '10,250 m/s';
                 document.getElementById('artemis-phase').textContent = phase;
                 
                 const scale = 0.01;
                 artemisGroup.position.set(x * scale, y * scale, z * scale);
                 artemisGroup.lookAt(0, 0, 0);
                 
-                artemisTrailPoints.push(artemisGroup.position.clone());
-                if (artemisTrailPoints.length > 80) artemisTrailPoints.shift();
-                artemisTrail.geometry.setFromPoints(artemisTrailPoints);
-                
                 setStatus('jpl', 'connected');
-                addLog(`Artemis: ${Math.floor(dist).toLocaleString()} km`, 'artemis');
+                addLog(`Artemis: ${Math.floor(dist).toLocaleString()} km [${phase}]`, 'artemis');
                 
             } catch(e) {
-                setStatus('jpl', 'offline');
-                addLog(`JPL: ${e.message}`, 'error');
+                // Use demo trajectory when API fails
+                setStatus('jpl', 'demo');
+                
+                artemisDemoAngle += 0.002;
+                const r = 35 + Math.sin(artemisDemoAngle * 0.5) * 15;
+                const x = Math.cos(artemisDemoAngle) * r;
+                const z = Math.sin(artemisDemoAngle) * r;
+                const y = Math.sin(artemisDemoAngle * 0.3) * 5;
+                
+                artemisGroup.position.set(x, y, z);
+                artemisGroup.lookAt(0, 0, 0);
+                
+                const dist = Math.sqrt(x*x + y*y + z*z) * 100;
+                const moonDist = Math.abs(384400 - dist);
+                
+                document.getElementById('artemis-dist').textContent = Math.floor(dist).toLocaleString() + ' km';
+                document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDist).toLocaleString() + ' km';
+                document.getElementById('artemis-vel').textContent = '10,250 m/s';
+                document.getElementById('artemis-phase').textContent = 'OUTBOUND COAST';
+                
+                if (Math.random() < 0.1) {
+                    addLog(`Artemis demo mode: ${Math.floor(dist).toLocaleString()} km`, 'artemis');
+                }
             }
         }
 
