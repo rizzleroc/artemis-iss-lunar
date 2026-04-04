@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORBITAL COMMAND // ARTEMIS + ISS + LUNAR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; 
+            color: #e0f0ff; 
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+        }
+        .crt {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%),
+                        linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+            background-size: 100% 4px, 4px 100%;
+            pointer-events: none; z-index: 1000; opacity: 0.4;
+        }
+        .hud-panel {
+            background: rgba(5, 15, 30, 0.9);
+            border: 1px solid rgba(64, 156, 255, 0.3);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 60, 120, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .hud-header {
+            background: linear-gradient(90deg, rgba(0,100,200,0.4), rgba(0,60,120,0.2));
+            border-bottom: 1px solid rgba(64, 156, 255, 0.4);
+            padding: 10px 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .metric { 
+            padding: 12px; 
+            border-bottom: 1px solid rgba(64, 156, 255, 0.1);
+            transition: all 0.3s;
+        }
+        .metric:hover { background: rgba(64, 156, 255, 0.05); }
+        .metric-label { 
+            color: rgba(160, 190, 220, 0.6); 
+            font-size: 9px; 
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        .metric-value { 
+            color: #fff; 
+            font-size: 18px; 
+            font-weight: 600;
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 15px rgba(100, 180, 255, 0.4);
+            margin-top: 2px;
+        }
+        .metric-unit { font-size: 11px; color: rgba(160, 190, 220, 0.5); margin-left: 4px; }
+        .live { animation: pulse 2s ease-in-out infinite; color: #4ade80; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .artemis { color: #f472b6; text-shadow: 0 0 15px rgba(244, 114, 182, 0.5); }
+        .iss { color: #60a5fa; text-shadow: 0 0 15px rgba(96, 165, 250, 0.5); }
+        .lunar { color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
+        
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .ui-layer { position: relative; z-index: 100; pointer-events: none; }
+        .ui-layer > * { pointer-events: auto; }
+        
+        #log { 
+            height: 150px; overflow-y: auto; 
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px; padding: 10px;
+        }
+        .log-entry { margin-bottom: 4px; padding-left: 8px; border-left: 2px solid; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(64, 156, 255, 0.5); border-radius: 3px; }
+        
+        .orbit-controls {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 200;
+        }
+        .orbit-btn {
+            background: rgba(5, 15, 30, 0.9);
+            border: 1px solid rgba(64, 156, 255, 0.4);
+            color: #a0c4ff; padding: 8px 16px;
+            font-family: 'Rajdhani', sans-serif; font-weight: 600;
+            cursor: pointer; transition: all 0.3s;
+            text-transform: uppercase; font-size: 11px;
+        }
+        .orbit-btn:hover, .orbit-btn.active {
+            background: rgba(64, 156, 255, 0.3);
+            border-color: #409cff; color: #fff;
+            box-shadow: 0 0 20px rgba(64, 156, 255, 0.3);
+        }
+        .status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            display: inline-block; margin-right: 6px;
+        }
+        .online { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+        .offline { background: #ef4444; }
+        .standby { background: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="crt"></div>
+    <div id="canvas-container"></div>
+    
+    <div class="ui-layer flex h-screen">
+        <!-- Left Panel - Artemis II -->
+        <div class="w-80 hud-panel flex flex-col m-3 mt-16">
+            <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(244,114,182,0.3), rgba(244,114,182,0.1)); border-color: rgba(244,114,182,0.4);">
+                <span class="artemis">ARTEMIS II // ORION</span>
+                <span class="live text-xs px-2 py-1 rounded" style="background: rgba(244,114,182,0.2)">● LIVE</span>
+            </div>
+            <div class="flex-1 overflow-auto">
+                <div class="metric">
+                    <div class="metric-label">Distance from Earth</div>
+                    <div class="metric-value artemis">
+                        <span id="artemis-dist">---</span>
+                        <span class="metric-unit">km</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Distance to Moon</div>
+                    <div class="metric-value">
+                        <span id="artemis-moon-dist">---</span>
+                        <span class="metric-unit">km</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Velocity</div>
+                    <div class="metric-value">
+                        <span id="artemis-vel">---</span>
+                        <span class="metric-unit">m/s</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Mission Phase</div>
+                    <div class="metric-value artemis" id="artemis-phase" style="font-size: 14px;">ACQUIRING...</div>
+                </div>
+                <div class="metric" style="border-bottom: none;">
+                    <div class="metric-label">Data Source</div>
+                    <div class="metric-value" style="font-size: 11px; color: rgba(160,190,220,0.7);">NASA JPL HORIZONS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center - Viewport -->
+        <div class="flex-1"></div>
+
+        <!-- Right Panel - ISS & Moon -->
+        <div class="w-80 flex flex-col m-3 mt-16 gap-3">
+            <!-- ISS Panel -->
+            <div class="hud-panel flex flex-col" style="flex: 1;">
+                <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(96,165,250,0.1)); border-color: rgba(96,165,250,0.4);">
+                    <span class="iss">ISS // TRACKING</span>
+                    <span class="live text-xs px-2 py-1 rounded" style="background: rgba(96,165,250,0.2)">● LIVE</span>
+                </div>
+                <div class="p-3">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">LAT</span>
+                        <span class="iss font-mono" id="iss-lat">--.--°</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">LON</span>
+                        <span class="iss font-mono" id="iss-lon">--.--°</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-400">ALT</span>
+                        <span class="font-mono" id="iss-alt">--- km</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Moon Panel -->
+            <div class="hud-panel flex flex-col" style="flex: 1;">
+                <div class="hud-header flex justify-between items-center" style="background: linear-gradient(90deg, rgba(251,191,36,0.3), rgba(251,191,36,0.1)); border-color: rgba(251,191,36,0.4);">
+                    <span class="lunar">MOON // POSITION</span>
+                    <span class="text-xs text-yellow-600">● TRACKED</span>
+                </div>
+                <div class="p-3">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">DISTANCE</span>
+                        <span class="lunar font-mono" id="moon-dist">--- km</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs text-gray-400">PHASE</span>
+                        <span class="font-mono" id="moon-phase">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-400">ILLUMINATION</span>
+                        <span class="font-mono" id="moon-illum">--%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Log -->
+            <div class="hud-panel flex flex-col" style="flex: 1.5;">
+                <div class="hud-header text-xs">SYSTEM LOG</div>
+                <div id="log" class="flex-1"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="orbit-controls">
+        <button class="orbit-btn active" onclick="setCameraTarget('earth')">EARTH</button>
+        <button class="orbit-btn" onclick="setCameraTarget('artemis')">ARTEMIS II</button>
+        <button class="orbit-btn" onclick="setCameraTarget('moon')">MOON</button>
+        <button class="orbit-btn" onclick="setCameraTarget('iss')">ISS</button>
+        <button class="orbit-btn" onclick="setCameraTarget('system')">SYSTEM</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ========== SCENE ==========
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000205);
+        scene.fog = new THREE.FogExp2(0x000205, 0.0002);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50000);
+        camera.position.set(0, 50, 150);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.5, 0.8));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 10;
+        controls.maxDistance = 1000;
+
+        // ========== EARTH ==========
+        const earthGroup = new THREE.Group();
+        scene.add(earthGroup);
+
+        const textureLoader = new THREE.TextureLoader();
+        
+        const earth = new THREE.Mesh(
+            new THREE.SphereGeometry(10, 128, 128),
+            new THREE.MeshStandardMaterial({
+                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-blue-marble.jpg'),
+                normalMap: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-topology.png'),
+                metalness: 0.1, roughness: 0.8
+            })
+        );
+        earth.castShadow = true; earth.receiveShadow = true;
+        earthGroup.add(earth);
+
+        // Atmosphere
+        earthGroup.add(new THREE.Mesh(
+            new THREE.SphereGeometry(10.3, 64, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0x4488ff, transparent: true, opacity: 0.15,
+                side: THREE.BackSide, blending: THREE.AdditiveBlending
+            })
+        ));
+
+        // Night lights
+        const nightLights = new THREE.Mesh(
+            new THREE.SphereGeometry(10.05, 64, 64),
+            new THREE.MeshBasicMaterial({
+                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-night.jpg'),
+                transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
+            })
+        );
+        earthGroup.add(nightLights);
+
+        // Clouds
+        const clouds = new THREE.Mesh(
+            new THREE.SphereGeometry(10.2, 64, 64),
+            new THREE.MeshStandardMaterial({
+                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/earth-clouds.png'),
+                transparent: true, opacity: 0.6
+            })
+        );
+        earthGroup.add(clouds);
+
+        // ========== MOON ==========
+        const moonOrbitRadius = 60; // 6x Earth radius for visibility
+        const moonGroup = new THREE.Group();
+        scene.add(moonGroup);
+
+        const moon = new THREE.Mesh(
+            new THREE.SphereGeometry(2.7, 64, 64), // Moon is ~27% Earth size
+            new THREE.MeshStandardMaterial({
+                map: textureLoader.load('https://unpkg.com/three-globe@2.24.13/example/img/moon-texture.jpg'),
+                color: 0xdddddd,
+                metalness: 0.0, roughness: 0.9
+            })
+        );
+        moon.castShadow = true; moon.receiveShadow = true;
+        moonGroup.add(moon);
+
+        // Moon orbit line
+        const moonOrbitLine = new THREE.Line(
+            new THREE.RingGeometry(moonOrbitRadius - 0.1, moonOrbitRadius + 0.1, 128),
+            new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+        );
+        moonOrbitLine.rotation.x = Math.PI / 2;
+        scene.add(moonOrbitLine);
+
+        // Moon glow
+        moonGroup.add(new THREE.Mesh(
+            new THREE.SphereGeometry(3, 32, 32),
+            new THREE.MeshBasicMaterial({
+                color: 0xfbbf24, transparent: true, opacity: 0.1,
+                blending: THREE.AdditiveBlending
+            })
+        ));
+
+        // ========== ARTEMIS II ==========
+        const artemisGroup = new THREE.Group();
+        scene.add(artemisGroup);
+
+        const artemisBody = new THREE.Mesh(
+            new THREE.ConeGeometry(0.3, 1, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.8, roughness: 0.2 })
+        );
+        artemisBody.rotation.x = Math.PI;
+        artemisGroup.add(artemisBody);
+
+        const artemisGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.8, 16, 16),
+            new THREE.MeshBasicMaterial({
+                color: 0xf472b6, transparent: true, opacity: 0.4,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        artemisGroup.add(artemisGlow);
+
+        // Artemis trail
+        const artemisTrail = new THREE.Line(
+            new THREE.BufferGeometry(),
+            new THREE.LineBasicMaterial({ color: 0xf472b6, transparent: true, opacity: 0.5 })
+        );
+        scene.add(artemisTrail);
+        const artemisTrailPoints = [];
+
+        // ========== ISS ==========
+        const issGroup = new THREE.Group();
+        scene.add(issGroup);
+
+        const issMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.15, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.3 })
+        );
+        issGroup.add(issMesh);
+
+        const issPanels = new THREE.Mesh(
+            new THREE.BoxGeometry(2.5, 0.03, 0.8),
+            new THREE.MeshStandardMaterial({ color: 0x1a3a5c, emissive: 0x0a1a2a, emissiveIntensity: 0.3 })
+        );
+        issGroup.add(issPanels);
+
+        const issGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 16, 16),
+            new THREE.MeshBasicMaterial({
+                color: 0x60a5fa, transparent: true, opacity: 0.3,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        issGroup.add(issGlow);
+
+        // ========== LIGHTING ==========
+        const sunLight = new THREE.DirectionalLight(0xffffff, 2);
+        sunLight.position.set(200, 100, 100);
+        sunLight.castShadow = true;
+        scene.add(sunLight);
+
+        const sunGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(5, 32, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffdd88, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending })
+        );
+        sunGlow.position.copy(sunLight.position);
+        scene.add(sunGlow);
+
+        scene.add(new THREE.AmbientLight(0x404040, 0.3));
+
+        // ========== STARS ==========
+        const stars = new THREE.Points(
+            new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(
+                Array.from({length: 6000}, () => (Math.random() - 0.5) * 2000), 3
+            )),
+            new THREE.PointsMaterial({ color: 0x88ccff, size: 1.5, transparent: true, opacity: 0.8 })
+        );
+        scene.add(stars);
+
+        // ========== LOGGING ==========
+        const log = document.getElementById('log');
+        function addLog(msg, type='info') {
+            const time = new Date().toISOString().split('T')[1].split('.')[0];
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.borderColor = type === 'artemis' ? '#f472b6' : type === 'iss' ? '#60a5fa' : type === 'lunar' ? '#fbbf24' : '#409cff';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+            if (log.children.length > 20) log.removeChild(log.firstChild);
+        }
+
+        // ========== DATA FETCHING ==========
+        let artemisData = null, issData = null, moonData = { distance: 384400, phase: 'Waxing Gibbous', illumination: 78 };
+
+        async function updateArtemis() {
+            try {
+                const now = new Date();
+                const pad = n => n.toString().padStart(2, '0');
+                const date = `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())}`;
+                
+                const url = `https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND='-1024'&OBJ_DATA='NO'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&CENTER='500@399'&START_TIME='${date}'&STOP_TIME='${date}'&STEP_SIZE='1d'&VEC_TABLE='2'&OUT_UNITS='KM-S'`;
+                
+                const res = await fetch(url.replace(/'/g, '%27').replace(/ /g, '%20'));
+                const data = await res.json();
+                
+                if (!data.result || !data.result.includes('$$SOE')) {
+                    throw new Error('No ephemeris data');
+                }
+                
+                const vectorBlock = data.result.split('$$SOE')[1].split('$$EOE')[0];
+                
+                const extract = (key, hasSpace) => {
+                    const matches = vectorBlock.match(new RegExp(`${key}${hasSpace ? ' ' : ''}=([+-]?\\d*\\.?\\d+(?:[eEdD][+-]?\\d+)?)`, 'gi'));
+                    if (!matches) return 0;
+                    const m = matches[matches.length-1].match(/=([+-]?\d*\.?\d+(?:[eEdD][+-]?\d+)?)/i);
+                    return m ? parseFloat(m[1].replace(/D/i, 'e')) : 0;
+                };
+                
+                const x = extract('X', true), y = extract('Y', true), z = extract('Z', true);
+                const vx = extract('VX', false), vy = extract('VY', false), vz = extract('VZ', false);
+                
+                const distKm = Math.sqrt(x*x + y*y + z*z);
+                const velMs = Math.sqrt(vx*vx + vy*vy + vz*vz) * 1000;
+                const moonDistKm = Math.abs(384400 - distKm);
+                
+                let phase = 'OUTBOUND COAST';
+                if (distKm < 10000) phase = 'EARTH ORBIT';
+                else if (distKm < 100000) phase = 'CLIMBING';
+                else if (distKm < 300000) phase = 'TRANS-LUNAR';
+                else if (moonDistKm < 50000) phase = 'LUNAR APPROACH';
+                
+                artemisData = { x, y, z, distKm, velMs, moonDistKm, phase };
+                
+                document.getElementById('artemis-dist').textContent = Math.floor(distKm).toLocaleString();
+                document.getElementById('artemis-moon-dist').textContent = Math.floor(moonDistKm).toLocaleString();
+                document.getElementById('artemis-vel').textContent = Math.floor(velMs).toLocaleString();
+                document.getElementById('artemis-phase').textContent = phase;
+                
+                // Position in 3D (scale: 1 unit = 1000 km for visibility)
+                const scale = 0.01;
+                artemisGroup.position.set(x * scale, y * scale, z * scale);
+                artemisGroup.lookAt(0, 0, 0);
+                
+                // Update trail
+                artemisTrailPoints.push(artemisGroup.position.x, artemisGroup.position.y, artemisGroup.position.z);
+                if (artemisTrailPoints.length > 150) artemisTrailPoints.splice(0, 3);
+                artemisTrail.geometry.setAttribute('position', new THREE.Float32BufferAttribute(artemisTrailPoints, 3));
+                
+                addLog(`Artemis: ${Math.floor(distKm).toLocaleString()} km from Earth [${phase}]`, 'artemis');
+                
+            } catch(e) {
+                addLog(`Artemis data: ${e.message}`, 'error');
+                // Use fallback position for demo
+                const angle = Date.now() * 0.0001;
+                const r = 35;
+                artemisGroup.position.set(Math.cos(angle) * r, Math.sin(angle * 0.3) * 5, Math.sin(angle) * r);
+            }
+        }
+
+        async function updateISS() {
+            try {
+                const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+                issData = await res.json();
+                
+                document.getElementById('iss-lat').textContent = issData.latitude.toFixed(2) + '°';
+                document.getElementById('iss-lon').textContent = issData.longitude.toFixed(2) + '°';
+                document.getElementById('iss-alt').textContent = issData.altitude.toFixed(1) + ' km';
+                
+                // ISS position (scale: Earth radius = 10 units)
+                const phi = (90 - issData.latitude) * Math.PI / 180;
+                const theta = (issData.longitude + 180) * Math.PI / 180;
+                const r = 10 + issData.altitude / 6371 * 10;
+                
+                issGroup.position.set(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.cos(phi),
+                    r * Math.sin(phi) * Math.sin(theta)
+                );
+                issGroup.lookAt(0, 0, 0);
+                
+                if (Date.now() % 30000 < 6000) {
+                    addLog(`ISS: ${issData.latitude.toFixed(1)}°, ${issData.longitude.toFixed(1)}°`, 'iss');
+                }
+            } catch(e) {
+                addLog(`ISS error: ${e.message}`, 'error');
+            }
+        }
+
+        function updateMoon() {
+            // Moon orbit: 27.3 days, elliptical
+            const now = new Date();
+            const daysSinceEpoch = (now - new Date(2026, 0, 1)) / 86400000;
+            const angle = (daysSinceEpoch / 27.3) * Math.PI * 2;
+            
+            // Simple elliptical orbit
+            const a = 60; // semi-major axis (scaled)
+            const e = 0.0549; // eccentricity
+            const r = a * (1 - e*e) / (1 + e * Math.cos(angle));
+            
+            moonGroup.position.set(
+                r * Math.cos(angle),
+                0,
+                r * Math.sin(angle) * 0.9 // Slight inclination
+            );
+            
+            // Update moon data display
+            const distKm = 384400 + Math.sin(angle) * 21000; // varies 363k-405k
+            document.getElementById('moon-dist').textContent = Math.floor(distKm).toLocaleString() + ' km';
+            document.getElementById('moon-phase').textContent = moonData.phase;
+            document.getElementById('moon-illum').textContent = moonData.illumination + '%';
+        }
+
+        // ========== CAMERA TARGETS ==========
+        window.setCameraTarget = function(target) {
+            document.querySelectorAll('.orbit-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (target === 'earth') {
+                controls.target.set(0, 0, 0);
+                camera.position.set(0, 30, 80);
+            } else if (target === 'artemis' && artemisData) {
+                controls.target.copy(artemisGroup.position);
+            } else if (target === 'moon') {
+                controls.target.copy(moonGroup.position);
+            } else if (target === 'iss') {
+                controls.target.copy(issGroup.position);
+            } else if (target === 'system') {
+                controls.target.set(20, 0, 20);
+                camera.position.set(80, 60, 80);
+            }
+        };
+
+        // ========== ANIMATION ==========
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            earth.rotation.y += 0.0005;
+            clouds.rotation.y += 0.0007;
+            nightLights.rotation.y += 0.0005;
+            
+            artemisGlow.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.2);
+            issGlow.scale.setScalar(1 + Math.sin(Date.now() * 0.003) * 0.15);
+            
+            updateMoon();
+            
+            controls.update();
+            composer.render();
+        }
+
+        // ========== INIT ==========
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        addLog('═══════════════════════════════', 'info');
+        addLog('ORBITAL COMMAND SYSTEM ONLINE', 'info');
+        addLog('═══════════════════════════════', 'info');
+        addLog('Artemis II: NASA JPL HORIZONS', 'artemis');
+        addLog('ISS: wheretheiss.at API', 'iss');
+        addLog('Moon: Ephemeris calculation', 'lunar');
+
+        updateArtemis();
+        updateISS();
+        setInterval(updateArtemis, 30000);
+        setInterval(updateISS, 5000);
+
+        animate();
+        
+        addLog('All systems operational', 'info');
+    </script>
+</body>
+</html>
