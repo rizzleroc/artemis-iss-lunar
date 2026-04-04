@@ -415,12 +415,37 @@
 
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
-            const speed = camera.position.distanceTo(controls.target) * 0.02;
+            const speed = camera.position.distanceTo(controls.target) * 0.05;
+            const forward = new THREE.Vector3();
+            const right = new THREE.Vector3();
+            
             switch(e.key.toLowerCase()) {
-                case 'w': case 'arrowup': controls.pan(0, speed); break;
-                case 's': case 'arrowdown': controls.pan(0, -speed); break;
-                case 'a': case 'arrowleft': controls.pan(speed, 0); break;
-                case 'd': case 'arrowright': controls.pan(-speed, 0); break;
+                case 'w': case 'arrowup':
+                    forward.subVectors(controls.target, camera.position).normalize();
+                    forward.y = 0; // Keep horizontal
+                    forward.normalize();
+                    controls.target.addScaledVector(forward, speed);
+                    camera.position.addScaledVector(forward, speed);
+                    break;
+                case 's': case 'arrowdown':
+                    forward.subVectors(controls.target, camera.position).normalize();
+                    forward.y = 0;
+                    forward.normalize();
+                    controls.target.addScaledVector(forward, -speed);
+                    camera.position.addScaledVector(forward, -speed);
+                    break;
+                case 'a': case 'arrowleft':
+                    forward.subVectors(controls.target, camera.position).normalize();
+                    right.crossVectors(forward, camera.up).normalize();
+                    controls.target.addScaledVector(right, -speed);
+                    camera.position.addScaledVector(right, -speed);
+                    break;
+                case 'd': case 'arrowright':
+                    forward.subVectors(controls.target, camera.position).normalize();
+                    right.crossVectors(forward, camera.up).normalize();
+                    controls.target.addScaledVector(right, speed);
+                    camera.position.addScaledVector(right, speed);
+                    break;
                 case '1': setCamera('artemis'); break;
                 case '2': setCamera('iss'); break;
                 case '3': setCamera('moon'); break;
@@ -428,6 +453,7 @@
                 case '5': setCamera('free'); break;
                 case '6': setCamera('system'); break;
             }
+            controls.update();
         });
 
         // ========== CELESTIAL BODIES ==========
