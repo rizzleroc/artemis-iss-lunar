@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBITAL COMMAND // ARTEMIS II MISSION CONTROL</title>
+    <title>ORBITAL COMMAND // ARTEMIS II</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
     <script type="importmap">
         {
@@ -14,7 +14,7 @@
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -43,132 +43,238 @@
         }
         
         .hud-panel {
-            background: rgba(5, 12, 24, 0.92);
+            background: rgba(5, 12, 24, 0.94);
             border: 1px solid rgba(64, 140, 220, 0.3);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 40, 80, 0.4);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0, 40, 80, 0.5);
         }
         
         .hud-header {
-            background: linear-gradient(90deg, rgba(0,80,160,0.4), rgba(0,40,80,0.2));
+            background: linear-gradient(90deg, rgba(0,80,160,0.5), rgba(0,40,80,0.2));
             border-bottom: 1px solid rgba(64, 140, 220, 0.4);
-            padding: 8px 12px;
+            padding: 10px 14px;
             font-weight: 700;
             letter-spacing: 2px;
-            font-size: 10px;
+            font-size: 11px;
             text-transform: uppercase;
         }
         
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: rgba(140, 180, 220, 0.6);
-            padding: 8px 12px;
-            cursor: pointer;
+        /* Mission Clock */
+        .mission-clock {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(5, 12, 24, 0.95);
+            border: 1px solid rgba(240, 160, 192, 0.4);
+            padding: 12px 30px;
+            z-index: 200;
+            text-align: center;
+        }
+        .mission-clock .label {
+            font-size: 9px;
+            color: rgba(240, 160, 192, 0.7);
+            letter-spacing: 3px;
+        }
+        .mission-clock .time {
+            font-family: 'Space Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            color: #f0a0c0;
+            text-shadow: 0 0 20px rgba(240, 160, 192, 0.5);
+        }
+        .mission-clock .phase {
+            font-size: 10px;
+            color: #70d0a0;
+            margin-top: 4px;
+        }
+        
+        /* Layer Controls */
+        .layer-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .layer-btn {
+            background: rgba(5, 12, 24, 0.9);
+            border: 1px solid rgba(64, 140, 220, 0.3);
+            color: #8cb4dc;
+            padding: 8px 16px;
             font-family: 'Rajdhani', sans-serif;
-            font-weight: 600;
             font-size: 10px;
-            text-transform: uppercase;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .tab-btn:hover, .tab-btn.active {
+        .layer-btn:hover { border-color: #4090d0; }
+        .layer-btn.active {
+            background: rgba(64, 140, 220, 0.2);
+            border-color: #4090d0;
             color: #fff;
-            border-bottom-color: #4090d0;
+        }
+        .layer-btn .indicator {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #333;
+        }
+        .layer-btn.active .indicator.artemis { background: #f0a0c0; box-shadow: 0 0 8px #f0a0c0; }
+        .layer-btn.active .indicator.trajectory { background: #70d0a0; box-shadow: 0 0 8px #70d0a0; }
+        .layer-btn.active .indicator.iss { background: #60b0e0; box-shadow: 0 0 8px #60b0e0; }
+        .layer-btn.active .indicator.moon { background: #e8c080; box-shadow: 0 0 8px #e8c080; }
+        .layer-btn.active .indicator.planets { background: #c0a0e0; box-shadow: 0 0 8px #c0a0e0; }
+        
+        /* Telemetry Panel */
+        .telemetry-panel {
+            position: fixed;
+            left: 20px;
+            top: 120px;
+            width: 320px;
+            z-index: 100;
         }
         
-        .metric { padding: 8px; border-bottom: 1px solid rgba(64, 140, 220, 0.1); }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 14px;
+        }
+        .metric { 
+            background: rgba(0, 20, 40, 0.4);
+            padding: 10px;
+            border-left: 2px solid rgba(64, 140, 220, 0.4);
+        }
         .metric-label { 
             color: rgba(140, 180, 220, 0.5); 
             font-size: 8px; 
             text-transform: uppercase;
             letter-spacing: 1.5px;
+            margin-bottom: 4px;
         }
         .metric-value { 
             color: #fff; 
-            font-size: 16px; 
+            font-size: 18px; 
             font-weight: 600;
-            font-family: 'SF Mono', monospace;
-            text-shadow: 0 0 10px rgba(100, 170, 255, 0.4);
+            font-family: 'Space Mono', monospace;
         }
-        .artemis { color: #f0a0c0; }
-        .iss { color: #60b0e0; }
-        .lunar { color: #e8c080; }
-        .planetary { color: #70d0a0; }
+        .metric-value.artemis { color: #f0a0c0; text-shadow: 0 0 15px rgba(240, 160, 192, 0.4); }
+        .metric-value.warning { color: #f0d080; }
         
-        .ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; pointer-events: none; display: flex; }
-        .ui-layer > * { pointer-events: auto; }
-        
-        #log { height: 100px; overflow-y: auto; font-family: 'SF Mono', monospace; font-size: 9px; padding: 10px; color: rgba(180, 200, 220, 0.7); }
-        .log-entry { margin-bottom: 3px; padding-left: 8px; border-left: 2px solid; line-height: 1.4; }
-        
-        .camera-controls {
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; flex-direction: column; gap: 8px;
-            z-index: 200; align-items: center;
-            background: rgba(0,0,0,0.85);
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid rgba(64, 140, 220, 0.3);
-            pointer-events: auto;
+        /* Timeline */
+        .timeline-container { 
+            padding: 14px; 
+            max-height: 200px; 
+            overflow-y: auto;
+            border-top: 1px solid rgba(64, 140, 220, 0.15);
         }
-        .camera-btn {
-            background: rgba(5, 15, 30, 0.95);
-            border: 1px solid rgba(64, 140, 220, 0.5);
-            color: #8cb4dc; padding: 6px 14px;
-            font-family: 'Rajdhani', sans-serif; font-weight: 600;
-            cursor: pointer; transition: all 0.25s;
-            text-transform: uppercase; font-size: 9px;
-            min-width: 100px;
-        }
-        .camera-btn:hover, .camera-btn.active {
-            background: rgba(64, 140, 220, 0.25);
-            border-color: #4090d0; color: #fff;
-        }
-        .camera-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-        
-        .satellite-list { max-height: 120px; overflow-y: auto; font-size: 10px; }
-        .sat-item {
-            display: flex; justify-content: space-between;
-            padding: 5px 10px; border-bottom: 1px solid rgba(64, 140, 220, 0.08);
-            cursor: pointer;
-        }
-        .sat-item:hover { background: rgba(64, 140, 220, 0.1); }
-        
-        .source-badge {
-            display: inline-block; padding: 2px 6px; border-radius: 2px;
-            font-size: 7px; text-transform: uppercase;
-        }
-        .badge-connected { background: rgba(74, 200, 120, 0.2); color: #4ac878; }
-        .badge-offline { background: rgba(220, 80, 80, 0.2); color: #dc5050; }
-        .badge-demo { background: rgba(220, 180, 80, 0.2); color: #dcb450; }
-        
-        .timeline-container { padding: 10px; max-height: 140px; overflow-y: auto; }
         .timeline-item {
-            display: flex; align-items: flex-start;
-            padding: 4px 0; border-left: 1px solid rgba(64, 140, 220, 0.2);
-            padding-left: 10px; margin-left: 4px; position: relative;
-            font-size: 9px; color: rgba(160, 190, 210, 0.6);
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            border-left: 2px solid rgba(64, 140, 220, 0.2);
+            padding-left: 12px;
+            margin-left: 8px;
+            position: relative;
+            font-size: 10px;
         }
         .timeline-item::before {
-            content: ''; position: absolute; left: -3px; top: 6px;
-            width: 5px; height: 5px; border-radius: 50%;
+            content: ''; position: absolute; left: -5px; top: 8px;
+            width: 8px; height: 8px; border-radius: 50%;
             background: rgba(64, 140, 220, 0.3);
-            border: 1px solid rgba(64, 140, 220, 0.5);
+            border: 2px solid rgba(64, 140, 220, 0.5);
         }
-        .timeline-item.active { color: #a0d0f0; }
-        .timeline-item.active::before { background: #4ac878; border-color: #4ac878; }
-        .timeline-item.completed::before { background: #4090d0; border-color: #4090d0; }
+        .timeline-item.active { 
+            border-left-color: #f0a0c0;
+            background: rgba(240, 160, 192, 0.05);
+        }
+        .timeline-item.active::before { 
+            background: #f0a0c0; 
+            border-color: #f0a0c0;
+            box-shadow: 0 0 10px #f0a0c0;
+        }
+        .timeline-item.completed::before { background: #70d0a0; border-color: #70d0a0; }
+        .timeline-time { width: 60px; color: #666; font-family: 'Space Mono', monospace; }
+        .timeline-event { flex: 1; color: #a0c0e0; }
+        .timeline-item.active .timeline-event { color: #f0a0c0; font-weight: 600; }
+        
+        /* Camera Controls */
+        .camera-dock {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .view-btn {
+            background: rgba(5, 12, 24, 0.95);
+            border: 1px solid rgba(64, 140, 220, 0.3);
+            color: #8cb4dc;
+            padding: 10px 18px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            text-align: left;
+            min-width: 140px;
+        }
+        .view-btn:hover { border-color: #4090d0; background: rgba(64, 140, 220, 0.15); }
+        .view-btn.active { 
+            background: rgba(240, 160, 192, 0.15); 
+            border-color: #f0a0c0; 
+            color: #f0c0d0;
+        }
+        
+        /* Burn Status */
+        .burn-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 200;
+            text-align: right;
+        }
+        .burn-indicator {
+            background: rgba(5, 12, 24, 0.95);
+            border: 1px solid rgba(112, 208, 160, 0.4);
+            padding: 12px 20px;
+            margin-bottom: 8px;
+        }
+        .burn-label { font-size: 9px; color: rgba(112, 208, 160, 0.7); letter-spacing: 2px; }
+        .burn-value { font-family: 'Space Mono', monospace; font-size: 20px; color: #70d0a0; }
+        
+        /* Log */
+        .log-panel {
+            position: fixed;
+            left: 20px;
+            bottom: 180px;
+            width: 320px;
+            max-height: 150px;
+            z-index: 100;
+        }
+        #log { 
+            padding: 10px; 
+            font-family: 'Space Mono', monospace; 
+            font-size: 9px; 
+            color: rgba(180, 200, 220, 0.7);
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .log-entry { margin-bottom: 3px; padding-left: 8px; border-left: 2px solid; line-height: 1.4; }
         
         .controls-hint {
-            position: fixed; bottom: 180px; left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); padding: 10px 16px;
-            border-radius: 4px; font-size: 10px;
-            color: rgba(140, 180, 220, 0.7);
-            border: 1px solid rgba(64, 140, 220, 0.25);
-            pointer-events: none; z-index: 199;
+            position: fixed;
+            bottom: 140px;
+            left: 20px;
+            font-size: 9px;
+            color: rgba(100, 140, 180, 0.5);
+            z-index: 99;
         }
         
         .loading-overlay {
@@ -181,9 +287,9 @@
         }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loader {
-            width: 50px; height: 50px;
-            border: 2px solid rgba(64, 140, 220, 0.2);
-            border-top-color: #4090d0;
+            width: 60px; height: 60px;
+            border: 3px solid rgba(64, 140, 220, 0.2);
+            border-top-color: #f0a0c0;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -199,173 +305,98 @@
     
     <div class="loading-overlay" id="loading">
         <div class="loader"></div>
-        <div style="margin-top: 24px; color: #4090d0; font-size: 12px; letter-spacing: 3px;">INITIALIZING ORBITAL COMMAND</div>
-        <div style="margin-top: 12px; color: #666; font-size: 10px;" id="loading-status">Loading rendering engine...</div>
+        <div style="margin-top: 24px; color: #f0a0c0; font-size: 14px; letter-spacing: 4px; font-weight: 600;">ARTEMIS II MISSION CONTROL</div>
+        <div style="margin-top: 12px; color: #666; font-size: 10px;" id="loading-status">Establishing telemetry link...</div>
     </div>
     
-    <div class="ui-layer">
-        <!-- Left Panel -->
-        <div style="width: 360px; display: flex; flex-direction: column; margin: 12px; margin-top: 70px; gap: 10px;">
-            
-            <!-- Artemis Mission Control (FOCUS) -->
-            <div class="hud-panel">
-                <div class="hud-header" style="background: linear-gradient(90deg, rgba(240,160,192,0.3), rgba(240,160,192,0.1));">
-                    <span class="artemis">ARTEMIS II // PRIMARY TARGET</span>
-                    <span id="artemis-status" class="source-badge badge-demo">INITIALIZING</span>
-                </div>
-                <div style="padding: 12px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="metric">
-                            <div class="metric-label">Earth Distance</div>
-                            <div class="metric-value artemis" id="artemis-dist">---</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Moon Distance</div>
-                            <div class="metric-value lunar" id="artemis-moon-dist">---</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Velocity</div>
-                            <div class="metric-value" id="artemis-vel">---</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Mission Phase</div>
-                            <div class="metric-value artemis" style="font-size: 12px;" id="artemis-phase">---</div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(64, 140, 220, 0.15);">
-                        <div style="font-size: 9px; color: rgba(140,180,220,0.5); margin-bottom: 6px; letter-spacing: 1px;">MISSION TIMELINE</div>
-                        <div class="timeline-container">
-                            <div class="timeline-item completed"><span style="width: 55px; color: #666;">T+00:00</span><span>Launch (Apr 1)</span></div>
-                            <div class="timeline-item completed"><span style="width: 55px; color: #666;">T+00:08</span><span>Core Stage Sep</span></div>
-                            <div class="timeline-item completed"><span style="width: 55px; color: #666;">T+01:30</span><span>TLI Burn</span></div>
-                            <div class="timeline-item active" id="timeline-current"><span style="width: 55px; color: #4ac878;">T+03.5d</span><span class="artemis" id="current-phase">Lunar Flyby</span></div>
-                            <div class="timeline-item"><span style="width: 55px; color: #666;">T+04-08d</span><span>Return Coast</span></div>
-                            <div class="timeline-item"><span style="width: 55px; color: #666;">T+10d</span><span>Splashdown</span></div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Mission Clock -->
+    <div class="mission-clock">
+        <div class="label">MISSION ELAPSED TIME</div>
+        <div class="time" id="met">T+03:12:45</div>
+        <div class="phase" id="mission-phase">LUNAR FLYBY</div>
+    </div>
+    
+    <!-- Layer Controls -->
+    <div class="layer-controls">
+        <button class="layer-btn active" onclick="toggleLayer('artemis')">
+            <span class="indicator artemis"></span> Artemis II
+        </button>
+        <button class="layer-btn active" onclick="toggleLayer('trajectory')">
+            <span class="indicator trajectory"></span> Trajectory
+        </button>
+        <button class="layer-btn" onclick="toggleLayer('iss')">
+            <span class="indicator iss"></span> ISS
+        </button>
+        <button class="layer-btn active" onclick="toggleLayer('moon')">
+            <span class="indicator moon"></span> Moon
+        </button>
+        <button class="layer-btn" onclick="toggleLayer('planets')">
+            <span class="indicator planets"></span> Planets
+        </button>
+    </div>
+    
+    <!-- Telemetry Panel -->
+    <div class="telemetry-panel hud-panel">
+        <div class="hud-header" style="background: linear-gradient(90deg, rgba(240,160,192,0.4), rgba(240,160,192,0.1));">
+            <span style="color: #f0a0c0;">ARTEMIS II TELEMETRY</span>
+        </div>
+        <div class="metric-grid">
+            <div class="metric">
+                <div class="metric-label">Earth Distance</div>
+                <div class="metric-value artemis" id="artemis-dist">---</div>
             </div>
-            
-            <!-- Other Objects -->
-            <div class="hud-panel">
-                <div class="hud-header">
-                    <span>SECONDARY TRACKING</span>
-                    <span id="object-count" class="source-badge badge-connected">0 Active</span>
-                </div>
-                <div class="satellite-list" id="satellite-list">
-                    <div style="padding: 12px; color: #666;">Initializing tracking systems...</div>
-                </div>
+            <div class="metric">
+                <div class="metric-label">Moon Distance</div>
+                <div class="metric-value warning" id="artemis-moon-dist">---</div>
             </div>
-            
-            <!-- Data Sources -->
-            <div class="hud-panel">
-                <div class="hud-header">DATA SOURCES</div>
-                <div style="padding: 12px; font-size: 9px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                        <span style="color: rgba(180,200,220,0.7);">NASA JPL Horizons</span>
-                        <span id="source-jpl" class="source-badge badge-demo">STANDBY</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                        <span style="color: rgba(180,200,220,0.7);">WhereTheISS.at</span>
-                        <span id="source-iss" class="source-badge badge-demo">STANDBY</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: rgba(180,200,220,0.7);">VSOP87 Planetary</span>
-                        <span class="source-badge badge-connected">ACTIVE</span>
-                    </div>
-                </div>
+            <div class="metric">
+                <div class="metric-label">Velocity</div>
+                <div class="metric-value" id="artemis-vel">---</div>
             </div>
-            
-            <!-- Log -->
-            <div class="hud-panel" style="flex: 1;">
-                <div class="hud-header" style="font-size: 9px;">SYSTEM LOG // TELEMETRY</div>
-                <div id="log"></div>
+            <div class="metric">
+                <div class="metric-label">Altitude</div>
+                <div class="metric-value" id="artemis-alt">---</div>
             </div>
         </div>
-
-        <!-- Center Spacer -->
-        <div style="flex: 1;"></div>
-
-        <!-- Right Panel -->
-        <div style="width: 300px; display: flex; flex-direction: column; margin: 12px; margin-top: 70px; gap: 10px;">
-            
-            <!-- ISS -->
-            <div class="hud-panel">
-                <div class="hud-header" style="background: linear-gradient(90deg, rgba(96,176,224,0.25), rgba(96,176,224,0.05));">
-                    <span class="iss">ISS // LIVE TRACKING</span>
-                    <span id="iss-status" class="source-badge badge-demo">STANDBY</span>
-                </div>
-                <div style="padding: 12px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
-                        <div>
-                            <div class="metric-label">LAT</div>
-                            <div class="metric-value iss" style="font-size: 13px;" id="iss-lat">--</div>
-                        </div>
-                        <div>
-                            <div class="metric-label">LON</div>
-                            <div class="metric-value iss" style="font-size: 13px;" id="iss-lon">--</div>
-                        </div>
-                        <div>
-                            <div class="metric-label">ALT</div>
-                            <div class="metric-value" style="font-size: 13px;" id="iss-alt">--</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Moon -->
-            <div class="hud-panel">
-                <div class="hud-header" style="background: linear-gradient(90deg, rgba(232,192,128,0.25), rgba(232,192,128,0.05));">
-                    <span class="lunar">MOON // ELP2000</span>
-                    <span class="source-badge badge-connected">ACTIVE</span>
-                </div>
-                <div style="padding: 12px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
-                        <div><span style="color: #666;">Distance:</span> <span class="lunar" id="moon-dist">---</span></div>
-                        <div><span style="color: #666;">Phase:</span> <span id="moon-phase">---</span></div>
-                        <div><span style="color: #666;">Illum:</span> <span id="moon-illum">--%</span></div>
-                        <div><span style="color: #666;">Perigee:</span> <span class="lunar" id="moon-perigee">---</span></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Solar System -->
-            <div class="hud-panel">
-                <div class="hud-header" style="background: linear-gradient(90deg, rgba(112,208,160,0.2), rgba(112,208,160,0.05));">
-                    <span class="planetary">SOLAR SYSTEM // VSOP87</span>
-                    <span class="source-badge badge-connected">ACTIVE</span>
-                </div>
-                <div style="padding: 12px;" id="planets-list">
-                    <div style="font-size: 10px; color: #666;">Calculating positions...</div>
-                </div>
-            </div>
-            
-            <!-- Selected Object -->
-            <div class="hud-panel" style="flex: 1;">
-                <div class="hud-header">SELECTED OBJECT</div>
-                <div style="padding: 12px;">
-                    <div class="metric-value" style="font-size: 14px; margin-bottom: 10px;" id="selected-name">None</div>
-                    <div style="font-size: 10px; color: rgba(150,170,190,0.6);" id="selected-details">Click an object</div>
-                </div>
-            </div>
+        <div class="timeline-container">
+            <div class="timeline-item completed"><span class="timeline-time">T+00:00</span><span class="timeline-event">Launch</span></div>
+            <div class="timeline-item completed"><span class="timeline-time">T+00:08</span><span class="timeline-event">Core Stage Sep</span></div>
+            <div class="timeline-item completed"><span class="timeline-time">T+01:30</span><span class="timeline-event">TLI Burn</span></div>
+            <div class="timeline-item active"><span class="timeline-time">T+03.5d</span><span class="timeline-event">Lunar Flyby</span></div>
+            <div class="timeline-item"><span class="timeline-time">T+04-08d</span><span class="timeline-event">Return Coast</span></div>
+            <div class="timeline-item"><span class="timeline-time">T+10d</span><span class="timeline-event">Splashdown</span></div>
         </div>
+    </div>
+    
+    <!-- Log Panel -->
+    <div class="log-panel hud-panel">
+        <div class="hud-header" style="font-size: 9px;">MISSION LOG</div>
+        <div id="log"></div>
     </div>
     
     <div class="controls-hint">
-        [LMB] ROTATE | [RMB] PAN | [SCROLL] ZOOM | [WASD] PAN | [1-6] VIEWS
+        [LMB] ROTATE | [RMB] PAN | [SCROLL] ZOOM | [WASD] MOVE | [1-6] VIEWS
     </div>
     
-    <div class="camera-controls">
-        <div class="camera-grid">
-            <button class="camera-btn" onclick="setCamera('artemis')">1. ARTEMIS</button>
-            <button class="camera-btn" onclick="setCamera('moon')">2. MOON</button>
-            <button class="camera-btn" onclick="setCamera('earth')">3. EARTH</button>
-            <button class="camera-btn" onclick="setCamera('iss')">4. ISS</button>
-            <button class="camera-btn active" onclick="setCamera('free')">5. FREE</button>
-            <button class="camera-btn" onclick="setCamera('system')">6. SYSTEM</button>
-            <button class="camera-btn" onclick="setCamera('mars')">7. MARS</button>
-            <button class="camera-btn" onclick="setCamera('jupiter')">8. JUPITER</button>
+    <!-- Camera Dock -->
+    <div class="camera-dock">
+        <button class="view-btn active" onclick="setCamera('artemis')">1. Artemis Chase</button>
+        <button class="view-btn" onclick="setCamera('moon')">2. Lunar Approach</button>
+        <button class="view-btn" onclick="setCamera('earth')">3. Earth View</button>
+        <button class="view-btn" onclick="setCamera('tliview')">4. TLI Perspective</button>
+        <button class="view-btn" onclick="setCamera('free')">5. Free Camera</button>
+        <button class="view-btn" onclick="setCamera('system')">6. Solar System</button>
+    </div>
+    
+    <!-- Burn Status -->
+    <div class="burn-status">
+        <div class="burn-indicator">
+            <div class="burn-label">NEXT BURN</div>
+            <div class="burn-value" id="next-burn">TEI -04:32:18</div>
+        </div>
+        <div class="burn-indicator" style="border-color: rgba(96, 176, 224, 0.4);">
+            <div class="burn-label" style="color: rgba(96, 176, 224, 0.7);">DSN LINK</div>
+            <div class="burn-value" style="color: #60b0e0; font-size: 14px;" id="dsn-link">Goldstone - STRONG</div>
         </div>
     </div>
 
@@ -378,13 +409,37 @@
 
         const API_BASE = 'https://kimicode.vercel.app/api';
         
+        // ========== LAYER STATE ==========
+        const layers = {
+            artemis: true,
+            trajectory: true,
+            iss: false,
+            moon: true,
+            planets: false
+        };
+        
+        window.toggleLayer = function(layer) {
+            layers[layer] = !layers[layer];
+            event.currentTarget.classList.toggle('active');
+            updateVisibility();
+            addLog(`${layer.toUpperCase()} layer ${layers[layer] ? 'enabled' : 'disabled'}`, 'info');
+        };
+        
+        function updateVisibility() {
+            artemisGroup.visible = layers.artemis;
+            trajectoryLine.visible = layers.trajectory;
+            issGroup.visible = layers.iss;
+            moonGroup.visible = layers.moon;
+            planetsGroup.visible = layers.planets;
+        }
+        
         // ========== SCENE SETUP ==========
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x020408);
-        scene.fog = new THREE.FogExp2(0x020408, 0.00002);
+        scene.fog = new THREE.FogExp2(0x020408, 0.000015);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100000);
-        camera.position.set(100, 50, 150);
+        camera.position.set(80, 40, 120);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -393,16 +448,13 @@
         renderer.shadowMap.enabled = true;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // Post-processing
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
-        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.35, 0.4, 0.85));
+        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.4, 0.5, 0.85));
 
         // ========== LIGHTING ==========
-        const ambientLight = new THREE.AmbientLight(0x1a2030, 0.4);
-        scene.add(ambientLight);
-        
-        const sunLight = new THREE.DirectionalLight(0xfff4e0, 2.0);
+        scene.add(new THREE.AmbientLight(0x1a2030, 0.4));
+        const sunLight = new THREE.DirectionalLight(0xfff4e0, 2.2);
         sunLight.position.set(1000, 300, 500);
         sunLight.castShadow = true;
         scene.add(sunLight);
@@ -411,17 +463,11 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.minDistance = 20;
-        controls.maxDistance = 8000;
+        controls.minDistance = 15;
+        controls.maxDistance = 10000;
         controls.enablePan = true;
         controls.screenSpacePanning = true;
-        
-        // Mouse buttons: LEFT=rotate, MIDDLE=dolly, RIGHT=pan
-        controls.mouseButtons = {
-            LEFT: THREE.MOUSE.ROTATE,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.PAN
-        };
+        controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
 
         // ========== CELESTIAL BODIES ==========
         const textureLoader = new THREE.TextureLoader();
@@ -432,9 +478,8 @@
         
         const earthMat = new THREE.MeshStandardMaterial({ color: 0x2244aa, metalness: 0.1, roughness: 0.7 });
         textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
-            (tex) => { earthMat.map = tex; earthMat.color.setHex(0xffffff); addLog('Earth texture loaded', 'info'); },
-            undefined,
-            () => addLog('Earth texture failed', 'error')
+            (tex) => { earthMat.map = tex; earthMat.color.setHex(0xffffff); },
+            undefined, () => {}
         );
         
         const earth = new THREE.Mesh(new THREE.SphereGeometry(10, 128, 128), earthMat);
@@ -450,15 +495,28 @@
         
         const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0, roughness: 0.9 });
         textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg',
-            (tex) => { moonMat.map = tex; moonMat.color.setHex(0xdddddd); addLog('Moon texture loaded', 'info'); },
-            undefined,
-            () => addLog('Moon texture failed', 'error')
+            (tex) => { moonMat.map = tex; moonMat.color.setHex(0xdddddd); },
+            undefined, () => {}
         );
-        
         moonGroup.add(new THREE.Mesh(new THREE.SphereGeometry(2.7, 64, 64), moonMat));
+
+        // Trajectory Line (Artemis path)
+        const trajectoryPoints = [];
+        for (let i = 0; i <= 100; i++) {
+            const t = i / 100;
+            // Approximate trajectory from Earth to Moon
+            const x = 10000 + t * 300000;
+            const z = Math.sin(t * Math.PI) * 80000;
+            const y = Math.sin(t * Math.PI * 2) * 15000;
+            trajectoryPoints.push(new THREE.Vector3(x * 0.0002, y * 0.0002, z * 0.0002));
+        }
+        const trajectoryGeometry = new THREE.BufferGeometry().setFromPoints(trajectoryPoints);
+        const trajectoryLine = new THREE.Line(trajectoryGeometry, new THREE.LineBasicMaterial({ color: 0x70d0a0, transparent: true, opacity: 0.6 }));
+        scene.add(trajectoryLine);
 
         // Planets
         const planetsGroup = new THREE.Group();
+        planetsGroup.visible = false;
         scene.add(planetsGroup);
 
         // ========== SPACECRAFT ==========
@@ -478,7 +536,9 @@
         artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x333333 })).translateY(-1.0));
         artemisGroup.scale.set(0.5, 0.5, 0.5);
 
+        // ISS
         const issGroup = new THREE.Group();
+        issGroup.visible = false;
         scene.add(issGroup);
         issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })));
         const mod1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), whiteMetal);
@@ -494,14 +554,14 @@
         // Stars
         const starsGeo = new THREE.BufferGeometry();
         const starPos = [];
-        for (let i = 0; i < 15000; i++) {
-            const r = 6000 + Math.random() * 4000;
+        for (let i = 0; i < 20000; i++) {
+            const r = 8000 + Math.random() * 6000;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             starPos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
         }
         starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
-        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.2, color: 0xaaccff, transparent: true, opacity: 0.8 })));
+        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.5, color: 0xaaccff, transparent: true, opacity: 0.9 })));
 
         // ========== UI & DATA ==========
         const logEl = document.getElementById('log');
@@ -509,36 +569,38 @@
             const time = new Date().toISOString().split('T')[1].split('.')[0];
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            const colors = { artemis: '#f0a0c0', iss: '#60b0e0', planetary: '#70d0a0', connected: '#4ac878', error: '#dc5050', info: '#4090d0' };
+            const colors = { artemis: '#f0a0c0', connected: '#70d0a0', error: '#f0a0a0', info: '#4090d0', warning: '#f0d080' };
             entry.style.borderColor = colors[type] || colors.info;
             entry.innerHTML = `<span style="color:#556">[${time}]</span> ${msg}`;
             logEl.appendChild(entry);
             logEl.scrollTop = logEl.scrollHeight;
-            if (logEl.children.length > 20) logEl.removeChild(logEl.firstChild);
+            if (logEl.children.length > 30) logEl.removeChild(logEl.firstChild);
         }
 
-        function setStatus(id, status, text) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const classes = { connected: 'badge-connected', demo: 'badge-demo', offline: 'badge-offline' };
-            el.className = 'source-badge ' + (classes[status] || classes.demo);
-            el.textContent = text || status.toUpperCase();
-        }
+        let allData = {}, cameraMode = 'artemis';
+        const launchTime = new Date('2026-04-01T09:00:00Z');
 
-        let allData = {}, cameraMode = 'free';
+        function updateMET() {
+            const now = new Date();
+            const elapsed = now - launchTime;
+            const days = Math.floor(elapsed / 86400000);
+            const hours = Math.floor((elapsed % 86400000) / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('met').textContent = `T+${days}d ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        }
+        setInterval(updateMET, 1000);
 
         async function fetchAllData() {
             try {
-                document.getElementById('loading-status').textContent = 'Fetching telemetry...';
                 const response = await fetch(`${API_BASE}?endpoint=all`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 allData = await response.json();
                 updateUI();
                 updatePositions();
-                addLog(`Telemetry: Artemis ${allData.artemis.phase}, ISS @ ${Math.floor(allData.iss.altitude)}km`, 'connected');
                 document.getElementById('loading').classList.add('hidden');
             } catch(e) {
-                addLog(`Data error: ${e.message}`, 'error');
+                addLog(`Telemetry error: ${e.message}`, 'error');
             }
         }
 
@@ -547,38 +609,25 @@
                 document.getElementById('artemis-dist').textContent = allData.artemis.distKm.toLocaleString() + ' km';
                 document.getElementById('artemis-moon-dist').textContent = allData.artemis.moonDistKm.toLocaleString() + ' km';
                 document.getElementById('artemis-vel').textContent = allData.artemis.velMs.toLocaleString() + ' m/s';
-                document.getElementById('artemis-phase').textContent = allData.artemis.phase;
-                document.getElementById('current-phase').textContent = allData.artemis.phase;
-                setStatus('artemis-status', 'connected', 'LIVE');
-                setStatus('source-jpl', 'connected', 'CONNECTED');
+                document.getElementById('artemis-alt').textContent = Math.floor(allData.artemis.distKm - 6371) + ' km';
+                document.getElementById('mission-phase').textContent = allData.artemis.phase;
+                
+                // Update burn countdown
+                const teiTime = new Date(launchTime.getTime() + 4.5 * 86400000);
+                const now = new Date();
+                const toTEI = teiTime - now;
+                if (toTEI > 0) {
+                    const h = Math.floor(toTEI / 3600000);
+                    const m = Math.floor((toTEI % 3600000) / 60000);
+                    const s = Math.floor((toTEI % 60000) / 1000);
+                    document.getElementById('next-burn').textContent = `TEI -${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                } else {
+                    document.getElementById('next-burn').textContent = 'TEI COMPLETE';
+                }
             }
             if (allData.iss) {
-                document.getElementById('iss-lat').textContent = allData.iss.latitude.toFixed(1) + '°';
-                document.getElementById('iss-lon').textContent = allData.iss.longitude.toFixed(1) + '°';
-                document.getElementById('iss-alt').textContent = Math.floor(allData.iss.altitude) + ' km';
-                setStatus('iss-status', 'connected', 'LIVE');
-                setStatus('source-iss', 'connected', 'CONNECTED');
+                document.getElementById('dsn-link').textContent = 'ISS Tracking Active';
             }
-            if (allData.moon) {
-                document.getElementById('moon-dist').textContent = allData.moon.distKm.toLocaleString() + ' km';
-                document.getElementById('moon-phase').textContent = allData.moon.phase;
-                document.getElementById('moon-illum').textContent = allData.moon.illumination + '%';
-                document.getElementById('moon-perigee').textContent = new Date(allData.moon.nextPerigee).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-            if (allData.planets?.planets) {
-                document.getElementById('planets-list').innerHTML = allData.planets.planets.map(p => 
-                    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(64,140,220,0.08);"><span style="color:${p.color}">● ${p.name}</span><span style="color:#666;font-size:10px;">${Math.floor(p.distance)}M km</span></div>`
-                ).join('');
-            }
-            let count = 2;
-            if (allData.planets?.planets) count += allData.planets.planets.length;
-            document.getElementById('object-count').textContent = count + ' Active';
-            document.getElementById('satellite-list').innerHTML = `
-                <div class="sat-item" onclick="selectObject('artemis')"><span class="artemis">● Artemis II</span><span style="color:#666;">PRIMARY</span></div>
-                <div class="sat-item" onclick="selectObject('iss')"><span class="iss">● ISS</span><span style="color:#666;">Station</span></div>
-                <div class="sat-item" onclick="selectObject('moon')"><span class="lunar">● Moon</span><span style="color:#666;">Natural</span></div>
-                ${allData.planets?.planets?.map(p => `<div class="sat-item" onclick="selectObject('${p.name.toLowerCase()}')"><span style="color:${p.color};">● ${p.name}</span><span style="color:#666;">Planet</span></div>`).join('') || ''}
-            `;
         }
 
         function updatePositions() {
@@ -615,23 +664,36 @@
             }
         }
 
-        // ========== CAMERA & INTERACTION ==========
+        // ========== CAMERA SYSTEM ==========
         window.setCamera = function(mode) {
-            document.querySelectorAll('.camera-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             cameraMode = mode;
             
-            const duration = 800, startPos = camera.position.clone(), startTarget = controls.target.clone();
+            const duration = 1000, startPos = camera.position.clone(), startTarget = controls.target.clone();
             let endPos, endTarget;
             
             switch(mode) {
-                case 'artemis': endPos = artemisGroup.position.clone().add(new THREE.Vector3(15, 8, 15)); endTarget = artemisGroup.position.clone(); break;
-                case 'moon': endPos = moonGroup.position.clone().add(new THREE.Vector3(20, 10, 20)); endTarget = moonGroup.position.clone(); break;
-                case 'earth': endPos = new THREE.Vector3(40, 25, 60); endTarget = new THREE.Vector3(0, 0, 0); break;
-                case 'iss': endPos = issGroup.position.clone().add(new THREE.Vector3(8, 4, 8)); endTarget = issGroup.position.clone(); break;
-                case 'system': endPos = new THREE.Vector3(300, 150, 300); endTarget = new THREE.Vector3(100, 0, 0); break;
-                case 'mars': const mars = allData.planets?.planets?.find(p => p.name === 'Mars'); if (mars) { endPos = new THREE.Vector3(mars.x + 80, 30, mars.z + 80); endTarget = new THREE.Vector3(mars.x, 0, mars.z); } break;
-                case 'jupiter': const jup = allData.planets?.planets?.find(p => p.name === 'Jupiter'); if (jup) { endPos = new THREE.Vector3(jup.x + 150, 60, jup.z + 150); endTarget = new THREE.Vector3(jup.x, 0, jup.z); } break;
+                case 'artemis': 
+                    endPos = artemisGroup.position.clone().add(new THREE.Vector3(12, 6, 12)); 
+                    endTarget = artemisGroup.position.clone(); 
+                    break;
+                case 'moon': 
+                    endPos = moonGroup.position.clone().add(new THREE.Vector3(25, 15, 25)); 
+                    endTarget = moonGroup.position.clone(); 
+                    break;
+                case 'earth': 
+                    endPos = new THREE.Vector3(35, 20, 50); 
+                    endTarget = new THREE.Vector3(0, 0, 0); 
+                    break;
+                case 'tliview':
+                    endPos = new THREE.Vector3(50, 30, 80);
+                    endTarget = artemisGroup.position.clone();
+                    break;
+                case 'system': 
+                    endPos = new THREE.Vector3(400, 200, 400); 
+                    endTarget = new THREE.Vector3(100, 0, 0); 
+                    break;
                 default: return;
             }
             
@@ -648,41 +710,20 @@
             }
         };
 
-        window.selectObject = function(name) {
-            const nameEl = document.getElementById('selected-name');
-            const detailsEl = document.getElementById('selected-details');
-            
-            switch(name) {
-                case 'artemis':
-                    nameEl.textContent = 'Artemis II Orion'; nameEl.style.color = '#f0a0c0';
-                    detailsEl.innerHTML = allData.artemis ? `Distance: ${allData.artemis.distKm.toLocaleString()} km<br>Moon: ${allData.artemis.moonDistKm.toLocaleString()} km<br>Velocity: ${allData.artemis.velMs.toLocaleString()} m/s<br>Phase: ${allData.artemis.phase}` : 'No data';
-                    break;
-                case 'iss':
-                    nameEl.textContent = 'ISS'; nameEl.style.color = '#60b0e0';
-                    detailsEl.innerHTML = allData.iss ? `Lat: ${allData.iss.latitude.toFixed(2)}°<br>Lon: ${allData.iss.longitude.toFixed(2)}°<br>Alt: ${allData.iss.altitude.toFixed(1)} km` : 'No data';
-                    break;
-                case 'moon':
-                    nameEl.textContent = 'Moon'; nameEl.style.color = '#e8c080';
-                    detailsEl.innerHTML = allData.moon ? `Distance: ${allData.moon.distKm.toLocaleString()} km<br>Phase: ${allData.moon.phase}<br>Illumination: ${allData.moon.illumination}%` : 'No data';
-                    break;
-                default:
-                    const p = allData.planets?.planets?.find(x => x.name.toLowerCase() === name);
-                    if (p) { nameEl.textContent = p.name; nameEl.style.color = p.color; detailsEl.innerHTML = `Distance: ${p.distance}M km<br>Period: ${p.period.toLocaleString()} days`; }
-            }
-        };
-
-        window.switchTab = function(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.getElementById('tab-' + tab).style.display = 'block';
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-        };
-
         // ========== ANIMATION ==========
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key >= '1' && e.key <= '6') {
+                document.querySelectorAll('.view-btn')[parseInt(e.key) - 1]?.click();
+            }
+        });
+        document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
         function animate() {
             requestAnimationFrame(animate);
             
-            // Handle keyboard input
+            // Keyboard movement
             const speed = camera.position.distanceTo(controls.target) * 0.02;
             const forward = new THREE.Vector3();
             const right = new THREE.Vector3();
@@ -710,8 +751,11 @@
             
             earth.rotation.y += 0.0003;
             
-            if (cameraMode === 'artemis') { camera.position.copy(artemisGroup.position).add(new THREE.Vector3(15, 8, 15)); controls.target.copy(artemisGroup.position); }
-            else if (cameraMode === 'iss') { camera.position.copy(issGroup.position).add(new THREE.Vector3(8, 4, 8)); controls.target.copy(issGroup.position); }
+            if (cameraMode === 'artemis') { 
+                const offset = new THREE.Vector3(12, 6, 12);
+                camera.position.copy(artemisGroup.position).add(offset); 
+                controls.target.copy(artemisGroup.position); 
+            }
             
             controls.update();
             composer.render();
@@ -724,27 +768,18 @@
             composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Unified keyboard handler
-        const keys = {};
-        document.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key >= '1' && e.key <= '6') {
-                const idx = parseInt(e.key) - 1;
-                const btn = document.querySelectorAll('.camera-btn')[idx];
-                if (btn) btn.click();
-            }
-        });
-        document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
-
         // Init
-        addLog('═══════════════════════════════', 'info');
-        addLog('ORBITAL COMMAND SYSTEM ONLINE', 'info');
-        addLog('═══════════════════════════════', 'info');
-        addLog('Mouse controls: LMB rotate, RMB pan, scroll zoom', 'info');
-        addLog('Keyboard: WASD pan, 1-6 camera views', 'info');
+        addLog('═════════════════════════════════', 'info');
+        addLog('ARTEMIS II MISSION CONTROL ONLINE', 'info');
+        addLog('═════════════════════════════════', 'info');
+        addLog('Mission Clock: T+03:12:45', 'artemis');
+        addLog('Artemis II in LUNAR FLYBY phase', 'artemis');
+        addLog('Trajectory visualization active', 'connected');
+        addLog('Use layer toggles to customize view', 'info');
         
         fetchAllData();
         setInterval(fetchAllData, 30000);
+        updateMET();
         animate();
     </script>
 </body>
