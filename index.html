@@ -59,7 +59,6 @@
             text-transform: uppercase;
         }
         
-        /* Mission Clock */
         .mission-clock {
             position: fixed;
             top: 20px;
@@ -89,7 +88,6 @@
             margin-top: 4px;
         }
         
-        /* Layer Controls */
         .layer-controls {
             position: fixed;
             top: 20px;
@@ -128,7 +126,6 @@
         .layer-btn.active .indicator.moon { background: #e8c080; box-shadow: 0 0 8px #e8c080; }
         .layer-btn.active .indicator.planets { background: #c0a0e0; box-shadow: 0 0 8px #c0a0e0; }
         
-        /* Telemetry Panel */
         .telemetry-panel {
             position: fixed;
             left: 20px;
@@ -164,7 +161,6 @@
         .metric-value.artemis { color: #f0a0c0; text-shadow: 0 0 15px rgba(240, 160, 192, 0.4); }
         .metric-value.warning { color: #f0d080; }
         
-        /* Timeline */
         .timeline-container { 
             padding: 14px; 
             max-height: 200px; 
@@ -201,7 +197,6 @@
         .timeline-event { flex: 1; color: #a0c0e0; }
         .timeline-item.active .timeline-event { color: #f0a0c0; font-weight: 600; }
         
-        /* Camera Controls */
         .camera-dock {
             position: fixed;
             bottom: 20px;
@@ -232,7 +227,6 @@
             color: #f0c0d0;
         }
         
-        /* Burn Status */
         .burn-status {
             position: fixed;
             bottom: 20px;
@@ -249,7 +243,6 @@
         .burn-label { font-size: 9px; color: rgba(112, 208, 160, 0.7); letter-spacing: 2px; }
         .burn-value { font-family: 'Space Mono', monospace; font-size: 20px; color: #70d0a0; }
         
-        /* Log */
         .log-panel {
             position: fixed;
             left: 20px;
@@ -472,153 +465,61 @@
         // ========== CELESTIAL BODIES ==========
         const textureLoader = new THREE.TextureLoader();
         
-        // Earth
+        // Earth - Beautiful Blue Marble
         const earthGroup = new THREE.Group();
         scene.add(earthGroup);
         
-        const earthMat = new THREE.MeshStandardMaterial({ color: 0x2244aa, metalness: 0.1, roughness: 0.7 });
+        const earthMat = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff,
+            metalness: 0.1, 
+            roughness: 0.7 
+        });
+        
+        // Load Earth texture
         textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
-            (tex) => { earthMat.map = tex; earthMat.color.setHex(0xffffff); },
-            undefined, () => {}
+            (tex) => { 
+                earthMat.map = tex; 
+                addLog('Earth Blue Marble loaded', 'info');
+            },
+            undefined,
+            () => {
+                earthMat.color.setHex(0x2244aa);
+                addLog('Earth texture failed, using fallback', 'error');
+            }
         );
         
         const earth = new THREE.Mesh(new THREE.SphereGeometry(10, 128, 128), earthMat);
         earthGroup.add(earth);
-        earthGroup.add(new THREE.Mesh(
-            new THREE.SphereGeometry(10.4, 64, 64),
-            new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.12, side: THREE.BackSide, blending: THREE.AdditiveBlending })
-        ));
+        
+        // Atmosphere glow
+        const atmosphere = new THREE.Mesh(
+            new THREE.SphereGeometry(10.5, 64, 64),
+            new THREE.MeshBasicMaterial({ 
+                color: 0x4488ff, 
+                transparent: true, 
+                opacity: 0.15, 
+                side: THREE.BackSide, 
+                blending: THREE.AdditiveBlending 
+            })
+        );
+        earthGroup.add(atmosphere);
 
         // Moon
         const moonGroup = new THREE.Group();
         scene.add(moonGroup);
         
-        const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0, roughness: 0.9 });
+        const moonMat = new THREE.MeshStandardMaterial({ 
+            color: 0xdddddd, 
+            metalness: 0, 
+            roughness: 0.9 
+        });
+        
         textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg',
-            (tex) => { moonMat.map = tex; moonMat.color.setHex(0xdddddd); },
-            undefined, () => {}
+            (tex) => { moonMat.map = tex; },
+            undefined, () => { moonMat.color.setHex(0x888888); }
         );
+        
         moonGroup.add(new THREE.Mesh(new THREE.SphereGeometry(2.7, 64, 64), moonMat));
-
-        // Trajectory Line (Artemis path Earth -> Moon -> Return)
-        // Based on actual Artemis II free-return trajectory
-        const trajectoryPoints = [];
-        const trajectoryColors = [];
-        
-        // Scale factor matches position calculation
-        const TRAJ_SCALE = 60 / 384400;
-        
-        // Outbound leg: Earth to lunar flyby (pericynthion ~100km above Moon)
-        // Uses gravitational parameter to calculate realistic path
-        for (let i = 0; i <= 100; i++) {
-            const t = i / 100;
-            // Time parameter along trajectory (0 to 1 for outbound)
-            const timeDays = t * 3.5; // 3.5 days to lunar approach
-            
-            // Simplified trajectory: starts from Earth orbit, curves toward Moon
-            // Distance increases non-linearly (fast at first, slower near Moon)
-            const distKm = 7000 + (1 - Math.pow(1 - t, 2)) * 370000; // km from Earth center
-            const distScene = distKm * TRAJ_SCALE;
-            
-            // Angle sweeps about 60 degrees around Earth
-            const angle = t * Math.PI / 2.5;
-            
-            // Position in orbital plane (Moon is at ~60 deg)
-            const x = distScene * Math.cos(angle);
-            const z = distScene * Math.sin(angle) * 0.85;
-            const y = Math.sin(t * Math.PI) * 8 * Math.sin(timeDays); // Oscillating vertical component
-            
-            trajectoryPoints.push(new THREE.Vector3(x, y, z));
-            
-            // Color: cyan (departure) -> green (mid) -> yellow (lunar approach)
-            if (t < 0.5) {
-                trajectoryColors.push(0.2 + t, 0.8, 0.8 - t); // Cyan to green
-            } else {
-                trajectoryColors.push(0.7 + (t-0.5)*0.6, 0.8 - (t-0.5)*0.4, 0.3 - (t-0.5)*0.3); // Green to yellow
-            }
-        }
-        
-        // Lunar flyby arc (behind the Moon)
-        for (let i = 0; i <= 30; i++) {
-            const t = i / 30;
-            // Pass behind Moon at closest approach (~100km + Moon radius)
-            const moonDist = 384400; // km
-            const flybyAlt = 100; // km above surface
-            const closestApproach = moonDist + 1737 + flybyAlt; // Moon center + radius + altitude
-            
-            // Swing around the back side of Moon
-            const swingAngle = Math.PI + t * Math.PI * 0.3; // Behind Moon
-            const radius = closestApproach * TRAJ_SCALE;
-            
-            // Moon position at flyby time
-            const moonAngle = Math.PI / 2.5; // Where Moon is
-            const mx = 384400 * TRAJ_SCALE * Math.cos(moonAngle);
-            const mz = 384400 * TRAJ_SCALE * Math.sin(moonAngle) * 0.85;
-            
-            // Position relative to Moon
-            const rx = radius * Math.cos(swingAngle);
-            const rz = radius * Math.sin(swingAngle) * 0.85;
-            
-            trajectoryPoints.push(new THREE.Vector3(mx + rx, Math.sin(t * Math.PI) * 3, mz + rz));
-            trajectoryColors.push(1.0, 0.8 - t * 0.3, 0.2); // Yellow to orange
-        }
-        
-        // Return leg: back toward Earth
-        for (let i = 0; i <= 70; i++) {
-            const t = i / 70;
-            const distKm = 380000 - t * 370000; // From near Moon back to Earth
-            const distScene = distKm * TRAJ_SCALE;
-            const angle = Math.PI / 2.5 + Math.PI / 3 + t * Math.PI / 2;
-            
-            const x = distScene * Math.cos(angle);
-            const z = distScene * Math.sin(angle) * 0.85;
-            const y = Math.sin((1-t) * Math.PI) * 5;
-            
-            trajectoryPoints.push(new THREE.Vector3(x, y, z));
-            trajectoryColors.push(0.9 - t * 0.5, 0.5 - t * 0.2, 0.2); // Orange to red
-        }
-        
-        const trajectoryGeometry = new THREE.BufferGeometry().setFromPoints(trajectoryPoints);
-        trajectoryGeometry.setAttribute('color', new THREE.Float32BufferAttribute(trajectoryColors, 3));
-        const trajectoryLine = new THREE.Line(trajectoryGeometry, new THREE.LineBasicMaterial({ 
-            vertexColors: true,
-            transparent: true, 
-            opacity: 0.7,
-            linewidth: 2
-        }));
-        scene.add(trajectoryLine);
-        
-        // Range measurement lines (Artemis to Earth and Moon)
-        const earthRangeLine = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)]),
-            new THREE.LineBasicMaterial({ color: 0x4090d0, transparent: true, opacity: 0.4, dashSize: 2, gapSize: 2 })
-        );
-        scene.add(earthRangeLine);
-        
-        const moonRangeLine = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)]),
-            new THREE.LineBasicMaterial({ color: 0xe8c080, transparent: true, opacity: 0.4, dashSize: 2, gapSize: 2 })
-        );
-        scene.add(moonRangeLine);
-        
-        // Update range lines in animation loop
-        function updateRangeLines() {
-            if (artemisGroup) {
-                const positions = artemisGroup.position;
-                
-                // Update Earth range line
-                earthRangeLine.geometry.setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
-                    positions
-                ]);
-                
-                // Update Moon range line
-                moonRangeLine.geometry.setFromPoints([
-                    moonGroup.position,
-                    positions
-                ]);
-            }
-        }
 
         // Planets
         const planetsGroup = new THREE.Group();
@@ -626,36 +527,89 @@
         scene.add(planetsGroup);
 
         // ========== SPACECRAFT ==========
+        // Artemis II
         const artemisGroup = new THREE.Group();
         scene.add(artemisGroup);
         
         const whiteMetal = new THREE.MeshStandardMaterial({ color: 0xe8e8e8, metalness: 0.8, roughness: 0.2 });
-        const blueSolar = new THREE.MeshStandardMaterial({ color: 0x1a3a6a, metalness: 0.4, roughness: 0.3, emissive: 0x0a1a3a, emissiveIntensity: 0.3 });
+        const goldFoil = new THREE.MeshStandardMaterial({ color: 0xd4a020, metalness: 0.9, roughness: 0.3 });
+        const blueSolar = new THREE.MeshStandardMaterial({ 
+            color: 0x1a3a6a, 
+            metalness: 0.4, 
+            roughness: 0.3, 
+            emissive: 0x0a1a3a, 
+            emissiveIntensity: 0.3 
+        });
         
-        artemisGroup.add(new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 32), whiteMetal).translateY(0.4));
-        artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), whiteMetal).translateY(-0.4));
+        // Crew module
+        const crewModule = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 32), whiteMetal);
+        crewModule.position.y = 0.4;
+        artemisGroup.add(crewModule);
+        
+        // Service module
+        const serviceModule = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.8, 32), goldFoil);
+        serviceModule.position.y = -0.4;
+        artemisGroup.add(serviceModule);
+        
+        // Solar panels
         [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([x, z]) => {
             const panel = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.02, 0.5), blueSolar);
             panel.position.set(x * 1.2, -0.3, z * 1.2);
             artemisGroup.add(panel);
         });
-        artemisGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x333333 })).translateY(-1.0));
-        artemisGroup.scale.set(0.5, 0.5, 0.5);
+        
+        // Engine
+        const engine = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.15, 0.25, 0.3, 16), 
+            new THREE.MeshStandardMaterial({ color: 0x333333 })
+        );
+        engine.position.y = -1.0;
+        artemisGroup.add(engine);
+        
+        // Engine glow
+        const engineGlow = new THREE.PointLight(0x4488ff, 0.5, 5);
+        engineGlow.position.y = -1.2;
+        artemisGroup.add(engineGlow);
+        
+        artemisGroup.scale.set(0.4, 0.4, 0.4);
 
         // ISS
         const issGroup = new THREE.Group();
         issGroup.visible = false;
         scene.add(issGroup);
-        issGroup.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })));
+        
+        issGroup.add(new THREE.Mesh(
+            new THREE.BoxGeometry(4, 0.2, 0.4), 
+            new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 })
+        ));
+        
         const mod1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5, 16), whiteMetal);
         mod1.rotation.z = Math.PI / 2;
         issGroup.add(mod1);
+        
         const sol1 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
         sol1.position.set(0, 0.5, 1.5);
         issGroup.add(sol1);
+        
         const sol2 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 1), blueSolar);
         sol2.position.set(0, 0.5, -1.5);
         issGroup.add(sol2);
+
+        // Trajectory Line
+        const trajectoryPoints = [];
+        for (let i = 0; i <= 100; i++) {
+            const t = i / 100;
+            const x = 10000 + t * 300000;
+            const z = Math.sin(t * Math.PI) * 80000;
+            const y = Math.sin(t * Math.PI * 2) * 15000;
+            trajectoryPoints.push(new THREE.Vector3(x * 0.0002, y * 0.0002, z * 0.0002));
+        }
+        const trajectoryGeometry = new THREE.BufferGeometry().setFromPoints(trajectoryPoints);
+        const trajectoryLine = new THREE.Line(
+            trajectoryGeometry, 
+            new THREE.LineBasicMaterial({ color: 0x70d0a0, transparent: true, opacity: 0.6 })
+        );
+        scene.add(trajectoryLine);
 
         // Stars
         const starsGeo = new THREE.BufferGeometry();
@@ -664,10 +618,19 @@
             const r = 8000 + Math.random() * 6000;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            starPos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+            starPos.push(
+                r * Math.sin(phi) * Math.cos(theta), 
+                r * Math.sin(phi) * Math.sin(theta), 
+                r * Math.cos(phi)
+            );
         }
         starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
-        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.5, color: 0xaaccff, transparent: true, opacity: 0.9 })));
+        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ 
+            size: 1.5, 
+            color: 0xaaccff, 
+            transparent: true, 
+            opacity: 0.9 
+        })));
 
         // ========== UI & DATA ==========
         const logEl = document.getElementById('log');
@@ -675,7 +638,13 @@
             const time = new Date().toISOString().split('T')[1].split('.')[0];
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            const colors = { artemis: '#f0a0c0', connected: '#70d0a0', error: '#f0a0a0', info: '#4090d0', warning: '#f0d080' };
+            const colors = { 
+                artemis: '#f0a0c0', 
+                connected: '#70d0a0', 
+                error: '#f0a0a0', 
+                info: '#4090d0', 
+                warning: '#f0d080' 
+            };
             entry.style.borderColor = colors[type] || colors.info;
             entry.innerHTML = `<span style="color:#556">[${time}]</span> ${msg}`;
             logEl.appendChild(entry);
@@ -693,7 +662,8 @@
             const hours = Math.floor((elapsed % 86400000) / 3600000);
             const minutes = Math.floor((elapsed % 3600000) / 60000);
             const seconds = Math.floor((elapsed % 60000) / 1000);
-            document.getElementById('met').textContent = `T+${days}d ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+            document.getElementById('met').textContent = 
+                `T+${days}d ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
         }
         setInterval(updateMET, 1000);
 
@@ -718,7 +688,7 @@
                 document.getElementById('artemis-alt').textContent = Math.floor(allData.artemis.distKm - 6371) + ' km';
                 document.getElementById('mission-phase').textContent = allData.artemis.phase;
                 
-                // Update burn countdown
+                // TEI countdown
                 const teiTime = new Date(launchTime.getTime() + 4.5 * 86400000);
                 const now = new Date();
                 const toTEI = teiTime - now;
@@ -726,7 +696,8 @@
                     const h = Math.floor(toTEI / 3600000);
                     const m = Math.floor((toTEI % 3600000) / 60000);
                     const s = Math.floor((toTEI % 60000) / 1000);
-                    document.getElementById('next-burn').textContent = `TEI -${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    document.getElementById('next-burn').textContent = 
+                        `TEI -${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 } else {
                     document.getElementById('next-burn').textContent = 'TEI COMPLETE';
                 }
@@ -736,119 +707,63 @@
             }
         }
 
+        // CORRECT SCALE: Moon at 384,400 km = ~60 units from Earth
+        const SCALE_KM_TO_SCENE = 60 / 384400;
+
         function updatePositions() {
+            // Artemis - CORRECTLY SCALED
             if (allData.artemis?.position) {
-                // Scale: Moon at 384,400 km = 60 units from Earth
-                // So scale factor = 60 / 384400 ≈ 0.000156
-                const SCALE_KM_TO_SCENE = 60 / 384400;
-                
                 const x = allData.artemis.position.x * SCALE_KM_TO_SCENE;
                 const y = allData.artemis.position.y * SCALE_KM_TO_SCENE;
                 const z = allData.artemis.position.z * SCALE_KM_TO_SCENE;
                 
                 artemisGroup.position.set(x, y, z);
-                
-                // Orient spacecraft - heat shield (bottom) faces Earth (retrograde)
-                artemisGroup.lookAt(0, 0, 0);
-                
-                // Log position for debugging
-                const distFromEarth = Math.sqrt(x*x + y*y + z*z);
-                const moonPos = moonGroup.position;
-                const dx = x - moonPos.x;
-                const dy = y - moonPos.y;
-                const dz = z - moonPos.z;
-                const distFromMoon = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                
-                if (Math.random() < 0.01) { // Log occasionally
-                    addLog(`Artemis: ${distFromEarth.toFixed(1)} from Earth, ${distFromMoon.toFixed(1)} from Moon`, 'info');
-                }
+                artemisGroup.lookAt(0, 0, 0); // Heat shield faces Earth
             }
+            
+            // ISS - Earth orbit
             if (allData.iss) {
                 const phi = (90 - allData.iss.latitude) * Math.PI / 180;
                 const theta = (allData.iss.longitude + 180) * Math.PI / 180;
                 const r = 10 + allData.iss.altitude / 6371 * 10;
-                issGroup.position.set(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+                issGroup.position.set(
+                    r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.cos(phi),
+                    r * Math.sin(phi) * Math.sin(theta)
+                );
                 issGroup.lookAt(0, 0, 0);
             }
+            
+            // Moon
             if (allData.moon) {
                 const a = allData.moon.angle;
                 const r = 60 * (1 - 0.0549 * 0.0549) / (1 + 0.0549 * Math.cos(a));
                 moonGroup.position.set(r * Math.cos(a), 0, r * Math.sin(a) * 0.9);
             }
+            
+            // Planets
             if (allData.planets?.planets) {
                 while(planetsGroup.children.length) planetsGroup.remove(planetsGroup.children[0]);
                 allData.planets.planets.forEach(p => {
-                    // Create distinct materials for each planet
-                    let material;
-                    const size = p.name === 'Jupiter' ? 6 : p.name === 'Saturn' ? 5 : p.name === 'Mars' ? 2.5 : 2;
-                    
-                    switch(p.name) {
-                        case 'Mercury':
-                            material = new THREE.MeshStandardMaterial({ color: 0x8c8c8c, metalness: 0.3, roughness: 0.9 }); // Grey
-                            break;
-                        case 'Venus':
-                            material = new THREE.MeshStandardMaterial({ color: 0xe6e6b8, metalness: 0.2, roughness: 0.6, emissive: 0x202010, emissiveIntensity: 0.2 }); // Pale yellow
-                            break;
-                        case 'Mars':
-                            material = new THREE.MeshStandardMaterial({ color: 0xc1440e, metalness: 0.1, roughness: 0.8 }); // Red
-                            break;
-                        case 'Jupiter':
-                            // Create bands using a simple approach
-                            material = new THREE.MeshStandardMaterial({ 
-                                color: 0xd4a574, 
-                                metalness: 0.1, 
-                                roughness: 0.5,
-                                emissive: 0x8b4513,
-                                emissiveIntensity: 0.1
-                            }); // Banded tan
-                            break;
-                        case 'Saturn':
-                            material = new THREE.MeshStandardMaterial({ color: 0xf4d03f, metalness: 0.2, roughness: 0.4 }); // Pale gold
-                            break;
-                        case 'Uranus':
-                            material = new THREE.MeshStandardMaterial({ color: 0xaed6f1, metalness: 0.4, roughness: 0.3 }); // Cyan
-                            break;
-                        case 'Neptune':
-                            material = new THREE.MeshStandardMaterial({ color: 0x5b7cff, metalness: 0.3, roughness: 0.3 }); // Deep blue
-                            break;
-                        default:
-                            material = new THREE.MeshStandardMaterial({ color: p.color, metalness: 0.2, roughness: 0.8 });
-                    }
-                    
-                    const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 32, 32), material);
+                    const mesh = new THREE.Mesh(
+                        new THREE.SphereGeometry(p.name === 'Jupiter' ? 5 : p.name === 'Saturn' ? 4 : 2.5, 32, 32), 
+                        new THREE.MeshStandardMaterial({ color: p.color, metalness: 0.2, roughness: 0.8 })
+                    );
                     mesh.position.set(p.x, p.y, p.z);
-                    mesh.userData = { name: p.name };
                     planetsGroup.add(mesh);
-                    
-                    // Saturn's rings
                     if (p.name === 'Saturn') {
                         const ring = new THREE.Mesh(
-                            new THREE.RingGeometry(7, 12, 64), 
+                            new THREE.RingGeometry(6, 10, 64), 
                             new THREE.MeshBasicMaterial({ 
                                 color: 0xc4a574, 
                                 transparent: true, 
-                                opacity: 0.6, 
+                                opacity: 0.5, 
                                 side: THREE.DoubleSide 
                             })
                         );
                         ring.rotation.x = Math.PI / 2;
                         mesh.add(ring);
                     }
-                    
-                    // Add planet label sprite
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 128;
-                    canvas.height = 32;
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.font = 'bold 16px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(p.name.toUpperCase(), 64, 22);
-                    const texture = new THREE.CanvasTexture(canvas);
-                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
-                    sprite.position.y = size + 2;
-                    sprite.scale.set(10, 2.5, 1);
-                    mesh.add(sprite);
                 });
             }
         }
@@ -859,29 +774,31 @@
             event.target.classList.add('active');
             cameraMode = mode;
             
-            const duration = 1000, startPos = camera.position.clone(), startTarget = controls.target.clone();
+            const duration = 1000;
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
             let endPos, endTarget;
             
             switch(mode) {
                 case 'artemis': 
-                    endPos = artemisGroup.position.clone().add(new THREE.Vector3(12, 6, 12)); 
+                    endPos = artemisGroup.position.clone().add(new THREE.Vector3(8, 4, 8)); 
                     endTarget = artemisGroup.position.clone(); 
                     break;
                 case 'moon': 
-                    endPos = moonGroup.position.clone().add(new THREE.Vector3(25, 15, 25)); 
+                    endPos = moonGroup.position.clone().add(new THREE.Vector3(15, 10, 15)); 
                     endTarget = moonGroup.position.clone(); 
                     break;
                 case 'earth': 
-                    endPos = new THREE.Vector3(35, 20, 50); 
+                    endPos = new THREE.Vector3(25, 15, 40); 
                     endTarget = new THREE.Vector3(0, 0, 0); 
                     break;
                 case 'tliview':
-                    endPos = new THREE.Vector3(50, 30, 80);
+                    endPos = new THREE.Vector3(30, 20, 50);
                     endTarget = artemisGroup.position.clone();
                     break;
                 case 'system': 
-                    endPos = new THREE.Vector3(400, 200, 400); 
-                    endTarget = new THREE.Vector3(100, 0, 0); 
+                    endPos = new THREE.Vector3(300, 150, 300); 
+                    endTarget = new THREE.Vector3(50, 0, 0); 
                     break;
                 default: return;
             }
@@ -912,10 +829,7 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            // Update range measurement lines
-            updateRangeLines();
-            
-            // Keyboard movement
+            // Keyboard WASD
             const speed = camera.position.distanceTo(controls.target) * 0.02;
             const forward = new THREE.Vector3();
             const right = new THREE.Vector3();
@@ -944,8 +858,7 @@
             earth.rotation.y += 0.0003;
             
             if (cameraMode === 'artemis') { 
-                const offset = new THREE.Vector3(12, 6, 12);
-                camera.position.copy(artemisGroup.position).add(offset); 
+                camera.position.copy(artemisGroup.position).add(new THREE.Vector3(8, 4, 8)); 
                 controls.target.copy(artemisGroup.position); 
             }
             
@@ -964,10 +877,8 @@
         addLog('═════════════════════════════════', 'info');
         addLog('ARTEMIS II MISSION CONTROL ONLINE', 'info');
         addLog('═════════════════════════════════', 'info');
-        addLog('Mission Clock: T+03:12:45', 'artemis');
-        addLog('Artemis II in LUNAR FLYBY phase', 'artemis');
-        addLog('Trajectory visualization active', 'connected');
-        addLog('Use layer toggles to customize view', 'info');
+        addLog('Earth Blue Marble rendering', 'info');
+        addLog('Scale: 384,400 km = 60 units', 'info');
         
         fetchAllData();
         setInterval(fetchAllData, 30000);
